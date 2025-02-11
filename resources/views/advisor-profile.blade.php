@@ -9,43 +9,74 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
             <form action="{{ isset($profile) && is_object($profile) ? route('advisor-profile.update', $profile->id) : route('advisor-profile.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
+                   
+            @csrf
 
                     @if (isset($profile))
                         @method('PUT') <!-- Use PUT method for updates -->
                     @endif
                     
                     @php
+                        
                         $profilePicture = null;
-                        if (isset($profile) && $profile->profile_picture) {
-                            $fullPath = 'storage/' . $profile->profile_picture; 
-                            if (file_exists($fullPath)) {
-                                $profilePicture = $profile->profile_picture;
-                            }
-                            //dd('Path 1', $profilePicture, 'Full Path', $fullPath);
-                        }
-                    @endphp
-                    
-                    @php
-                        $picturePath = 'storage/' . $profilePicture;
-                        $fullPath = public_path($picturePath);
-                        //dd('Path 2', $picturePath, 'Full Path', $fullPath); 
-                    @endphp
+                        $errorImage = 'storage/profile-image.png';
+                        $debug = [];
 
+                        if (isset($profile) && $profile->profile_picture) {
+                            $debug['profile_picture_db'] = $profile->profile_picture;
+                            // Construct the public storage path
+                            $publicPath = 'storage/' . $profile->profile_picture;
+                            $debug['public_path'] = $publicPath;
+                            // Construct the full storage path for existence check
+                            $fullPath = storage_path('app/public/' . $profile->profile_picture);
+                            
+                            $debug['full_path'] = $fullPath;
+                            $debug['file_exists'] = file_exists($fullPath) ? 'Yes' : 'No';
+
+                            if (file_exists($fullPath)) {
+                                $profilePicture = $publicPath;
+                                $debug['selected_path'] = $profilePicture;
+                            }
+                        }
+                        $debug['error_image'] = $errorImage;
+                        $debug['error_image_exists'] = file_exists(public_path($errorImage)) ? 'Yes' : 'No';
+
+                    @endphp
                     
+                    <!-- Debug Information (only visible to admins) -->
+                    @if(auth()->user()->is_admin ?? false)
+                        <div class="bg-gray-100 p-4 mb-4 rounded">
+                            <h3 class="font-bold mb-2">Debug Information:</h3>
+                            <pre class="text-xs">{{ print_r($debug, true) }}</pre>
+                        </div>
+                    @endif
+
                     <!-- Profile Picture Display-->
                     <div class="mb-4">
                         @if ($profilePicture)
-                            <div class="relative w-20 h-20  mb-4">
-                                <img src="{{ asset('storage/' . $profilePicture) }}" 
-                                    alt="Profile Picture" 
-                                    class="rounded-full w-20 h-20 object-cover"
-                                    id="profile-picture-preview"
-                                    onerror="this.src='profile-image.png'" /> 
-                            </div>      
+
+                            @php
+                                //dd('Profile Picture', $profilePicture); 
+                            @endphp
+
+                            <div class="mb-4">
+                                <div class="relative w-20 h-20 mb-4">
+                                    <img src="{{ $profilePicture ? asset($profilePicture) : asset($errorImage) }}" 
+                                        alt="{{ $profilePicture ? 'Profile Picture' : 'Default Profile Picture' }}" 
+                                        class="rounded-full w-20 h-20 object-cover"
+                                        id="profile-picture-preview"
+                                        onerror="this.src='{{ asset($errorImage) }}'" />
+                                </div>
+                            </div>
+
                         @else
+                            @php
+                                //dd(' else Profile Picture', $profilePicture); 
+                            @endphp
+
+
                             <div class="relative w-20 h-20 mx-auto mb-4">
-                                <img src="{{ asset('storage/profile-image.png') }}" 
+                                <img src="{{ asset('profile-image.png') }}" 
                                     alt="Default Profile Picture" 
                                     class="rounded-full w-20 h-20 object-cover"
                                     id="profile-picture-preview" />                            

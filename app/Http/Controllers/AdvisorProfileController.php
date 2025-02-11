@@ -102,7 +102,7 @@ class AdvisorProfileController extends Controller
         ]);
     
         // Add debugging here
-         dd($data); // Check validated data
+        //dd($data); // Check validated data
         // dd(Auth::id()); // Check authenticated user ID
 
         try {
@@ -113,6 +113,7 @@ class AdvisorProfileController extends Controller
                 
                 // Remove old picture if it exists
                 if (isset($advisor) && $advisor->profile_picture) {
+
                     Storage::disk('public')->delete($advisor->profile_picture);
                 }
                 
@@ -122,13 +123,6 @@ class AdvisorProfileController extends Controller
                 
                 // Store the path and immediately make it available for the view
                 session()->flash('temp_profile_picture', $profilePicturePath);
-
-                // Store the new picture and get the path relative to the storage/app/public directory
-                //$profilePicturePath = $request->file('profile_picture')
-                //    ->storeAs('profiles', 
-                //        time() . '_' . $request->file('profile_picture')->getClientOriginalName(),
-                //        'public'
-                //    );
                 
                 // Log the file storage information
                 Log::info('Profile picture stored', [
@@ -244,7 +238,7 @@ public function update(Request $request, $id)
     $advisor = Advisor::findOrFail($id);
 
 
-    //dd($data['full_name']); // Check overview
+    //dd($data); // Check overview
     //dd($advisor->full_name); // Check overview
 
     // Update profile details
@@ -257,14 +251,13 @@ public function update(Request $request, $id)
     $profilePicturePath = $advisor->profile_picture;
     $oldProfilePicture = $advisor->profile_picture;
 
-    //dd($advisor->full_name); // Check overview
-
     // Handle profile picture upload
 
         if ($request->hasFile('profile_picture')) {
 
             // Delete the old picture if it exists
             if ($oldProfilePicture && Storage::disk('public')->exists($oldProfilePicture)) {
+                //dd($profilePicturePath); // Check overview
                 Storage::disk('public')->delete($oldProfilePicture);
             }
 
@@ -282,6 +275,7 @@ public function update(Request $request, $id)
         //dd($advisor->full_name); // Check overview
         //dd($data['full_name']); // Check overview
        
+        //dd($profilePicturePath); // Check overview
         $advisor->save();
 
         // Update education details
