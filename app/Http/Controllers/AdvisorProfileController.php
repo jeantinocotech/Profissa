@@ -102,7 +102,7 @@ class AdvisorProfileController extends Controller
         ]);
     
         // Add debugging here
-        // dd($data); // Check validated data
+         dd($data); // Check validated data
         // dd(Auth::id()); // Check authenticated user ID
 
         try {

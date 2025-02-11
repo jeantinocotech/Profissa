@@ -11,6 +11,20 @@
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     {{ __("You're logged in!") }}
                 </div>
+                 <!-- Add this button -->
+                 <div class="p-6">
+                    <a href="{{ route('advisor-profile.show') }}" 
+                       class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Go to Advisor Profile
+                    </a>
+                </div>
+                   <!-- Add this button -->
+                   <div class="p-6">
+                    <a href="{{ route('finder-profile.show') }}" 
+                       class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Go to Finder Profile
+                    </a>
+                </div>
             </div>
         </div>
     </div>

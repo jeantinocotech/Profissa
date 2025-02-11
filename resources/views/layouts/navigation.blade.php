@@ -15,6 +15,12 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
+                        {{ __('Advisor Profile') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
+                        {{ __('Finder Profile') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -70,6 +76,14 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
+                {{ __('Advisor Profile') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
+                {{ __('Finder Profile') }}
+            </x-responsive-nav-link>
+
         </div>
 
         <!-- Responsive Settings Options -->
