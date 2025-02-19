@@ -53,4 +53,8 @@ Route::get('/phpinfo', function () {
     phpinfo();
 });
 
+Route::get('/advisor-matches', [AdvisorMatchingController::class, 'findMatchingAdvisors']);
+Route::post('/meeting-request/{advisorId}', [AdvisorMatchingController::class, 'createMeetingRequest']);
+Route::post('/meeting-response/{meetingRequest}', [AdvisorMatchingController::class, 'respondToRequest']);
+
 require __DIR__.'/auth.php';

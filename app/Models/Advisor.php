@@ -25,4 +25,16 @@ class Advisor extends Model
     {
         return $this->hasMany(ProfileEducation::class, 'id_profiles_advisor');
     }
+
+    public function skills()
+    {
+        return $this->belongsToMany(Skill::class, 'advisor_skills', 'id_profiles_advisor', 'id_skills')
+            ->withPivot('competency_level');
+    }
+
+    public function meetingRequests()
+    {
+        return $this->hasMany(MeetingRequest::class, 'id_profiles_advisor');
+    }
+
 }
