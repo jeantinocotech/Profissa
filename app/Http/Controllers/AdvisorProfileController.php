@@ -8,10 +8,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\View;
 use App\Models\Advisor;
 use App\Models\Course;
 use App\Models\Education;
 use App\Models\ProfileEducation;
+use App\Models\Skills;
+use App\Models\AdvisorSkill;
 
 class AdvisorProfileController extends Controller
 {
@@ -22,11 +26,6 @@ class AdvisorProfileController extends Controller
         //$advisor = Advisor::findOrFail($user->id);
         //$educationData = $advisor->profileEducation()->with('education.course')->get();
         //$courses = DB::table('courses')->get();
-
-        // Fetch profile data
-        //$profile = DB::table('profiles_advisor')
-        //->where('user_id', $user->id)
-        //->first();
 
         try {
             $user = Auth::user();
@@ -43,8 +42,6 @@ class AdvisorProfileController extends Controller
             
             //$advisor = Advisor::where('user_id', $user->id)->first();
             
-            //dd('Reached show method 1', $profile); // Immediate debugging
-
             // More precise error handling
             if (!$profile) {
                 Log::warning('No advisor profile found', ['user_id' => $user->id]);
@@ -52,14 +49,31 @@ class AdvisorProfileController extends Controller
                     ->with('error', 'Please complete your advisor profile');
             }
     
+           //$skillsData = AdvisorSkill::with('skill')
+           //->where('id_profiles_advisor', $profile->id)
+           //->get();
+    
+            // Modify this part to get both skill ID and name
+            $skillsData = DB::table('advisor_skills')
+            ->join('skills', 'advisor_skills.id_skills', '=', 'skills.id')
+            ->where('advisor_skills.id_profiles_advisor', $profile->id)
+            ->select('skills.id', 'skills.name')
+            ->get();
+
+           //dd('Reached show method - profile', $profile); 
+           //dd('Reached show method 1', $skillsData); // Immediate debugging
+
             $educationData = DB::table('profile_education')
             ->join('courses', 'profile_education.id_courses', '=', 'courses.id')
             ->where('profile_education.id_profiles_advisor', $profile->id)
             ->select('profile_education.*','courses.courses_name')
             ->get(); // get() to fetch all records
 
+            $allSkills = Skills::all(); // Get all available skills for the form
             $courses = Course::all();
     
+            //dd('Reached show method - profile', $profile, $skillsData, $educationData); 
+
             //dd('Reached show method 1', $profile->id); // Immediate debugging
             //dd('Reached show method edu:', $educationData); // Immediate debugging
             //dd('Reached show method edu:', $courses); // Immediate debugging
@@ -68,6 +82,8 @@ class AdvisorProfileController extends Controller
                 'profile' => $profile, 
                 'educationData' => $educationData,
                 'courses' => $courses,
+                'skillsData' => $skillsData,
+                'allSkills' => $allSkills // Add this line
             ]);
     
         } catch (\Exception $e) {
@@ -98,7 +114,9 @@ class AdvisorProfileController extends Controller
             'start_date.*' => 'required|date',
             'end_date' => 'nullable|array',
             'comments' => 'nullable|array',
-            'is_active' => 'required|boolean', // Add this to your validation
+            'is_active' => 'required|boolean', 
+            'skills' => 'array|nullable',
+            'skills.*.id' => 'exists:skills,id'
         ]);
     
         // Add debugging here
@@ -106,6 +124,8 @@ class AdvisorProfileController extends Controller
         // dd(Auth::id()); // Check authenticated user ID
 
         try {
+
+            DB::beginTransaction();
 
             // Handle profile picture upload
             $profilePicturePath = null;
@@ -186,7 +206,38 @@ class AdvisorProfileController extends Controller
                     'comments' => $data['comments'][$index] ?? null,
                 ]);
             }
+
+            // Process skills
+            //dd('Store - antes de processar Skikks', $advisorProfileId); // Check generated ID
             
+            if ($request->has('skills')) {
+                $skills = collect($request->skills)->map(function($skillId) {
+                    if (str_starts_with($skillId, 'new_')) {
+                        // Create new skill if it doesn't exist
+                        $skillName = str_replace('new_', '', $skillId);
+                        $skill = Skills::firstOrCreate(
+                            ['name' => $skillName],
+                            ['created_at' => now()]
+                        );
+                        return $skill->id;
+                    }
+                    return $skillId;
+                });
+            
+                // Insert all skills
+                $skillsToInsert = $skills->map(function($skillId) use ($advisorProfileId) {
+                    return [
+                        'id_profiles_advisor' => $advisorProfileId,
+                        'id_skills' => $skillId,
+                        'created_at' => now()
+                    ];
+                })->all();
+            
+                AdvisorSkill::insert($skillsToInsert);
+            }
+            
+            DB::commit();
+
             return redirect()
             ->route('advisor-profile.show')
             ->with('success', 'Profile created successfully!')
@@ -194,6 +245,9 @@ class AdvisorProfileController extends Controller
 
             //return redirect()->route('dashboard')->with('success', 'Profile created successfully!');
         } catch (\Exception $e) {
+            
+            DB::rollBack();
+            
             // More comprehensive error logging
             Log::error('Advisor Profile Creation Failed', [
                 'user_id' => Auth::id(),
@@ -230,13 +284,22 @@ public function update(Request $request, $id)
         'end_date.*' => 'nullable|date',
         'comments' => 'array',
         'comments.*' => 'nullable|string|max:500',
+        'skills' => 'array|nullable',
+        'skills.*' => 'exists:skills,id'
     ]);
 
     try {
         
+    DB::beginTransaction();
+    
     // Find the advisor profile
     $advisor = Advisor::findOrFail($id);
-
+     // Update profiles_advisor table directly
+     
+    // $advisor = DB::table('profiles_advisor')->where('id', $id)->first();
+    // if (!$advisor) {
+    //     throw new \Exception('Advisor profile not found');
+    // }
 
     //dd($data); // Check overview
     //dd($advisor->full_name); // Check overview
@@ -250,6 +313,8 @@ public function update(Request $request, $id)
 
     $profilePicturePath = $advisor->profile_picture;
     $oldProfilePicture = $advisor->profile_picture;
+
+    //dd('antes pict',$data);
 
     // Handle profile picture upload
 
@@ -276,7 +341,7 @@ public function update(Request $request, $id)
         //dd($data['full_name']); // Check overview
        
         //dd($profilePicturePath); // Check overview
-        $advisor->save();
+        $advisor->save(); 
 
         // Update education details
         // Clear old education records
@@ -293,31 +358,79 @@ public function update(Request $request, $id)
                 'comments' => $data['comments'][$index] ?? null,
             ]);
     }
-} catch (\Exception $e) {
-    Log::error('Advisor Profile Update Failed', [
-        'user_id' => Auth::id(),
-        'error' => $e->getMessage(),
-        'trace' => $e->getTraceAsString(),
-        'file' => $e->getFile(),
-        'line' => $e->getLine(),
-        'data' => $data
-    ]);
 
-    return redirect()->back()->with('error', 'Failed to update profile: ' . $e->getMessage());
-}
+        //dd('antes do IF de skills', $id, $data);
 
-    //'id_profiles_advisor' => $advisorProfileId,    --check if this is needed
+        // Delete existing skills before inserting new ones
+        AdvisorSkill::where('id_profiles_advisor', $id)->delete();
 
-    // More detailed logging
-    Log::info('Storing advisor profile', [
-        'user_id' => Auth::id(),
-        'data' => $data
-    ]);
+       
+        if ($request->has('skills')) {
 
-    return redirect()->route('dashboard')->with('success', 'Profile updated successfully!');
 
-    redirect()->route('advisor-profile.edit')->with('success', 'Profile created successfully!');
+            $skills = collect($request->skills)->map(function($skillId) {
+                //dd('IF de apagar skills', $skillId);
+                if (str_starts_with($skillId, 'new_')) {
+                
+                    // Create new skill if it doesn't exist
+                    $skillName = str_replace('new_', '', $skillId);
+                   
+                   
+                    $skill = Skills::firstOrCreate(
+                        ['name' => $skillName],
+                        ['created_at' => now()]
+                    );
 
+                    //dd('IF de novo skills', $skillId);
+
+                    Log::info('New Skill Created', ['name' => $skillName, 'id' => $skill->id]);
+                    
+                    return $skill->id;
+                }
+
+                return $skillId;
+            });
+
+         // Insert all skills
+         $skillsToInsert = $skills->map(function($skillId) use ($id) {
+            return [
+                'id_profiles_advisor' => $id,
+                'id_skills' => $skillId,
+                'created_at' => now()
+            ];
+        })->all();
+
+        AdvisorSkill::insert($skillsToInsert);
+        //dd('depois do insert skills', $id, $data);
+        }
+         DB::commit();
+         
+         return redirect()->route('dashboard')->with('success', 'Profile updated successfully!');
+
+    } catch (\Exception $e) {
+    
+        //dd('error insert skills', $id, $data);
+
+        Log::error('Advisor Profile Update Failed', [
+            'user_id' => Auth::id(),
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'data' => $data
+        ]);
+
+        // More detailed logging
+        Log::info('Storing advisor profile', [
+            'user_id' => Auth::id(),
+            'data' => $data
+        ]);
+        
+        DB::rollBack();
+
+        return redirect()->back()->with('error', 'Failed to save profile: ' . $e->getMessage());
+
+    }
 }
 
 public function create()
@@ -325,11 +438,14 @@ public function create()
     $courses = Course::all();
     $educationData = []; 
     $profile = null; // Explicitly pass null profile
+    $skillsData = collect([]); // Add empty collection for skills
+
 
     return view('advisor-profile', [
         'courses' => $courses,
         'educationData' => $educationData,
-        'profile' => $profile
+        'profile' => $profile,
+        'skillsData' => $skillsData
     ]);
 }
 
@@ -337,8 +453,33 @@ public function edit($id)
 {
     $profile = Advisor::with('profileEducation.education.course')->findOrFail($id);
     $courses = Course::all();
+    $skillsData =  Skills::all();
 
     return view('advisor-profile', compact('profile', 'courses'));
+}
+
+public function searchSkills(Request $request)
+{
+    $term = $request->get('term');
+    
+    $skills = DB::table('skills')
+        ->where('name', 'LIKE', "%{$term}%")
+        ->select('id', 'name')
+        ->limit(10)
+        ->get();
+
+    if ($skills->isEmpty() && strlen($term) >= 2) {
+        // If no existing skill found, return the search term as a new skill option
+        $skills = collect([
+            [
+                'id' => 'new_' . Str::slug($term),
+                'name' => $term . ' (Create New)',
+                'is_new' => true
+            ]
+        ]);
+    }
+
+    return response()->json($skills);
 }
 
 }
