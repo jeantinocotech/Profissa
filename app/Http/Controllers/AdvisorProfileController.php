@@ -209,9 +209,11 @@ class AdvisorProfileController extends Controller
 
             // Process skills
             //dd('Store - antes de processar Skikks', $advisorProfileId); // Check generated ID
-            
+            Log::info('Skills from request', ['skills' => $request->skills]);
+
             if ($request->has('skills')) {
-                $skills = collect($request->skills)->map(function($skillId) {
+                $skills = collect($request->skills)->map(function($skillId) use ($request) {
+                Log::info('Skills from request', ['skills' => $request->skills]);
                     if (str_starts_with($skillId, 'new_')) {
                         // Create new skill if it doesn't exist
                         $skillName = str_replace('new_', '', $skillId);
@@ -219,6 +221,7 @@ class AdvisorProfileController extends Controller
                             ['name' => $skillName],
                             ['created_at' => now()]
                         );
+                        Log::info('New skill added', ['skills' => $skillName]);
                         return $skill->id;
                     }
                     return $skillId;
@@ -285,7 +288,7 @@ public function update(Request $request, $id)
         'comments' => 'array',
         'comments.*' => 'nullable|string|max:500',
         'skills' => 'array|nullable',
-        'skills.*' => 'exists:skills,id'
+        'skills.*' => 'string'
     ]);
 
     try {
@@ -358,51 +361,57 @@ public function update(Request $request, $id)
                 'comments' => $data['comments'][$index] ?? null,
             ]);
     }
-
+       
+        Log::info('Delete Skills - Antes de deletar');
         //dd('antes do IF de skills', $id, $data);
 
-        // Delete existing skills before inserting new ones
-        AdvisorSkill::where('id_profiles_advisor', $id)->delete();
+       // Delete existing skills
+       AdvisorSkill::where('id_profiles_advisor', $id)->delete();
 
-       
-        if ($request->has('skills')) {
+       Log::info('Depois - Delete Skills', ['skills' => $request->skills]);
 
-
-            $skills = collect($request->skills)->map(function($skillId) {
-                //dd('IF de apagar skills', $skillId);
-                if (str_starts_with($skillId, 'new_')) {
-                
-                    // Create new skill if it doesn't exist
-                    $skillName = str_replace('new_', '', $skillId);
+       // Check if skills exist in the request
+       if ($request->has('skills') && is_array($request->skills)) {
+           Log::info('Processing skills', ['skills' => $request->skills]);
+           
+           $skillsToInsert = [];
+           
+           foreach ($request->skills as $skillId) {
+               // Check if this is a new skill
+               if (str_starts_with($skillId, 'new_')) {
+                   // Extract skill name (remove 'new_' prefix)
+                   $skillName = str_replace('new_', '', $skillId);
+                   $skillName = urldecode($skillName); // In case it's URL encoded
                    
+                   Log::info('Criar new Skills - Antes de inserir');
+                   // Create the skill if it doesn't exist
+                   $skill = Skills::firstOrCreate(
+                       ['name' => $skillName],
+                       ['created_at' => now()]
+                   );
                    
-                    $skill = Skills::firstOrCreate(
-                        ['name' => $skillName],
-                        ['created_at' => now()]
-                    );
-
-                    //dd('IF de novo skills', $skillId);
-
-                    Log::info('New Skill Created', ['name' => $skillName, 'id' => $skill->id]);
-                    
-                    return $skill->id;
-                }
-
-                return $skillId;
-            });
-
-         // Insert all skills
-         $skillsToInsert = $skills->map(function($skillId) use ($id) {
-            return [
-                'id_profiles_advisor' => $id,
-                'id_skills' => $skillId,
-                'created_at' => now()
-            ];
-        })->all();
-
-        AdvisorSkill::insert($skillsToInsert);
-        //dd('depois do insert skills', $id, $data);
-        }
+                   Log::info('New skill created', ['name' => $skillName, 'id' => $skill->id]);
+                   
+                   // Use the new skill's ID
+                   $skillId = $skill->id;
+               }
+               
+               // Add to our collection of skills to insert
+               $skillsToInsert[] = [
+                   'id_profiles_advisor' => $id,
+                   'id_skills' => $skillId,
+                   'created_at' => now()
+               ];
+           }
+           
+           // Insert all skills if we have any
+           if (!empty($skillsToInsert)) {
+               AdvisorSkill::insert($skillsToInsert);
+               Log::info('Skills inserted', ['count' => count($skillsToInsert)]);
+           }
+       }
+         
+         Log::info('Antes do commit');
          DB::commit();
          
          return redirect()->route('dashboard')->with('success', 'Profile updated successfully!');

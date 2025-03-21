@@ -23,13 +23,20 @@ class Advisor extends Model
     // Relationship with profielEducation
     public function profileEducation()
     {
-        return $this->hasMany(ProfileEducation::class, 'id_profiles_advisor');
+        return $this->hasMany(ProfileEducation::class, 'id_profiles_advisor', 'id');
     }
 
+    // Many-to-Many relationship with skills through advisor_skills
     public function skills()
     {
-        return $this->belongsToMany(Skill::class, 'advisor_skills', 'id_profiles_advisor', 'id_skills')
-            ->withPivot('competency_level');
+        return $this->belongsToMany(Skills::class, 'advisor_skills', 'id_profiles_advisor', 'id_skills');
+                 
+    }
+
+    // Direct relationship with advisor_skills
+    public function advisorSkills()
+    {
+        return $this->hasMany(AdvisorSkill::class, 'id_profiles_advisor', 'id');
     }
 
     public function meetingRequests()

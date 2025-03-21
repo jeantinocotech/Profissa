@@ -21,6 +21,9 @@
                     <x-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
                         {{ __('Finder Profile') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('advisor.search')" :active="request()->routeIs('advisor.search')">
+                        {{ __('Find an Advisor') }}
+                    </x-nav-link>
                 </div>
             </div>
 

@@ -2,6 +2,9 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdvisorProfileController;
 use App\Http\Controllers\FinderProfileController;
+use App\Http\Controllers\AdvisorMatchingController;
+use App\Http\Controllers\FinderSearchController;
+use App\Http\Controllers\MeetingRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -40,6 +43,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/finder-profile', [FinderProfileController::class, 'store'])->name('finder-profile.store');
     
     Route::put('/finder-profile/{id}', [FinderProfileController::class, 'update'])->name('finder-profile.update');
+
+     // Route for Finder Search Advisors page
+    //Route::get('/advisor-search', [FinderSearchController::class, 'index'])->name('advisor.search');
+    Route::post('/advisor-search', [FinderSearchController::class, 'search'])->name('advisor.search.results');
     
 });
 
@@ -53,8 +60,21 @@ Route::get('/phpinfo', function () {
     phpinfo();
 });
 
-Route::get('/advisor-matches', [AdvisorMatchingController::class, 'findMatchingAdvisors']);
 Route::post('/meeting-request/{advisorId}', [AdvisorMatchingController::class, 'createMeetingRequest']);
 Route::post('/meeting-response/{meetingRequest}', [AdvisorMatchingController::class, 'respondToRequest']);
+Route::get('/api/skills/search', [AdvisorProfileController::class, 'searchSkills']);
+
+Route::get('/advisor-matching', [AdvisorMatchingController::class, 'index'])->name('advisor-matching.index');
+Route::post('/advisor-matching/find', [AdvisorMatchingController::class, 'find'])->name('advisor-matching.find');
+
+Route::post('/advisor-request', [AdvisorMatchingController::class, 'sendRequest'])->name('advisor-request.send');
+
+
+
+// Advisor matching routes
+Route::get('/advisor-matches', [AdvisorMatchingController::class, 'findMatchingAdvisors'])
+    ->name('advisor.matches')
+    ->middleware('auth');
+
 
 require __DIR__.'/auth.php';

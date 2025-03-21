@@ -22,6 +22,8 @@
                         $errorImage = 'storage/profile-image.png';
                         $debug = [];
 
+                        //dd('Profile', $profile); 
+
                         if (isset($profile) && $profile->profile_picture) {
                             $debug['profile_picture_db'] = $profile->profile_picture;
                             // Construct the public storage path
@@ -123,13 +125,44 @@
                         <x-input-error :messages="$errors->get('overview')" class="mt-2" />
                     </div>
 
+                    @php
+                        //dd('Profile', $profile); 
+                    @endphp
+                    
+                    <!-- Skills & Expertise -->
+                    <div class="mb-4">
+                        <x-input-label for="skills" :value="__('Skills & Expertise')" />
+                        
+                        <div class="skill-input-container">
+                            <div class="flex gap-2 mb-2">
+                                <x-text-input 
+                                    id="skill-input" 
+                                    type="text" 
+                                    class="mt-1 block w-full" 
+                                    placeholder="Type a skill and press Enter or select from suggestions" 
+                                />
+                            </div>
+                            
+                            <!-- Suggestions will appear here -->
+                            <div id="skill-suggestions" class="hidden mt-1 w-full border rounded-md bg-white shadow-lg max-h-40 overflow-y-auto"></div>
+                            
+                            <div id="selected-skills" class="mt-2 flex flex-wrap gap-2">
+                                @if(isset($skillsData) && $skillsData->count() > 0)
+                                    @foreach($skillsData as $skill)
+                                        <div class="skill-tag bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2">
+                                            <span>{{ $skill->name }}</span>
+                                            <input type="hidden" name="skills[]" value="{{ $skill->id }}">
+                                            <button type="button" class="remove-skill text-blue-600 hover:text-blue-800">&times;</button>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
                             <!-- Education Section -->
                             <div id="education-section" class="mt-6">
                                 <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">{{ __('Education') }}</h3>
-                            
-                            @php
-                                // dd('Reached show method edu:', $educationData); // Immediate debugging
-                            @endphp
 
                                 <!-- Existing Education Entries -->
                                 @foreach($educationData as $index => $education)
@@ -205,6 +238,10 @@
                         //dd('Picture :', $profile->profile_picture); // Immediate debugging
                     @endphp
 
+                    @php
+                         //dd('Reached show method:', $skillsData); // Immediate debugging
+                    @endphp
+
                 </form>
             </div>
         </div>
@@ -213,6 +250,110 @@
 
 
 <script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const skillInput = document.getElementById('skill-input');
+    const skillSuggestions = document.getElementById('skill-suggestions');
+    const selectedSkills = document.getElementById('selected-skills');
+    let currentSkills = new Set();
+    
+    // Initialize current skills from existing tags
+    document.querySelectorAll('.skill-tag input').forEach(input => {
+        currentSkills.add(input.value);
+    });
+
+    skillInput.addEventListener('input', debounce(function() {
+        const searchTerm = this.value.trim();
+        if (searchTerm.length < 2) {
+            skillSuggestions.classList.add('hidden');
+            return;
+        }
+
+        // Fetch suggestions from server
+        fetch(`/api/skills/search?term=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(data => {
+                skillSuggestions.innerHTML = '';
+                data.forEach(skill => {
+                    if (!currentSkills.has(skill.id.toString())) {
+                        const div = document.createElement('div');
+                        div.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+                        div.textContent = skill.name;
+                        div.onclick = () => addSkill(skill);
+                        skillSuggestions.appendChild(div);
+                    }
+                });
+                skillSuggestions.classList.remove('hidden');
+            });
+    }, 300));
+
+    function addSkill(skill) {
+        if (!currentSkills.has(skill.id.toString())) {
+            const skillTag = document.createElement('div');
+            skillTag.className = 'skill-tag bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2';
+            skillTag.innerHTML = `
+                <span>${skill.name}</span>
+                <input type="hidden" name="skills[]" value="${skill.id}">
+                <button type="button" class="remove-skill text-blue-600 hover:text-blue-800">&times;</button>
+            `;
+            
+        
+            skillTag.querySelector('.remove-skill').onclick = function() {
+                alert(skill.id.toString());
+                currentSkills.delete(skill.id.toString());
+                skillTag.remove();
+            };
+
+            selectedSkills.appendChild(skillTag);
+            currentSkills.add(skill.id.toString());
+            skillInput.value = '';
+            skillSuggestions.classList.add('hidden');
+        }
+    }
+
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func.apply(this, args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!skillInput.contains(e.target) && !skillSuggestions.contains(e.target)) {
+            skillSuggestions.classList.add('hidden');
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+    // Check if the clicked element is the remove button
+    if (event.target.classList.contains('remove-skill')) {
+        const skillTag = event.target.closest('.skill-tag'); // Get parent skill tag
+        
+        if (skillTag) {
+            const skillId = skillTag.querySelector('input[name="skills[]"]').value; // Get skill ID
+            currentSkills.delete(skillId); // Remove from data structure
+            skillTag.remove(); // Remove from UI
+        }
+    }
+    });
+
+    //document.addEventListener('click', function(event) {
+    //if (event.target.classList.contains('skill-tag')) {
+        //alert('clicked ');
+    //    const skillId = event.target.getAttribute('data-skill-id'); // Get skill ID
+    //    currentSkills.delete(skillId); // Remove from data
+    //    event.target.remove(); // Remove from UI
+    //}
+    //});
+
+});
 
     // Profile Photo Preview
     document.getElementById("profile-photo").addEventListener("change", function(event) {

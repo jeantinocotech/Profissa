@@ -49,7 +49,7 @@
                 </div>
 
                 <div class="px-4 py-3 bg-gray-50">
-                    <button onclick="window.location.href='{{ route('meeting.request', $advisor->id) }}'"
+                    <button onclick="window.location.href='{{ route('meeting.request', $advisor->id) }}';"
                             class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 
                                    transition duration-200">
                         Request Meeting
