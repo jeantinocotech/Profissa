@@ -6,6 +6,7 @@ use App\Http\Controllers\AdvisorMatchingController;
 use App\Http\Controllers\FinderSearchController;
 use App\Http\Controllers\MeetingRequestController;
 use Illuminate\Support\Facades\Route;
+Use App\Http\Controllers\CourseSearchController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -14,6 +15,9 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -45,9 +49,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/finder-profile/{id}', [FinderProfileController::class, 'update'])->name('finder-profile.update');
 
      // Route for Finder Search Advisors page
-    //Route::get('/advisor-search', [FinderSearchController::class, 'index'])->name('advisor.search');
     Route::post('/advisor-search', [FinderSearchController::class, 'search'])->name('advisor.search.results');
-    
+    Route::get('/advisor-search', [FinderSearchController::class, 'index'])->name('advisor.search');
+
+    Route::get('/areas/search', [CourseSearchController::class, 'search']);
+
 });
 
 Route::middleware('auth')->group(function () {
@@ -68,6 +74,7 @@ Route::get('/advisor-matching', [AdvisorMatchingController::class, 'index'])->na
 Route::post('/advisor-matching/find', [AdvisorMatchingController::class, 'find'])->name('advisor-matching.find');
 
 Route::post('/advisor-request', [AdvisorMatchingController::class, 'sendRequest'])->name('advisor-request.send');
+
 
 
 

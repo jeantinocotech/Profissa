@@ -133,7 +133,6 @@ class AdvisorProfileController extends Controller
                 
                 // Remove old picture if it exists
                 if (isset($advisor) && $advisor->profile_picture) {
-
                     Storage::disk('public')->delete($advisor->profile_picture);
                 }
                 

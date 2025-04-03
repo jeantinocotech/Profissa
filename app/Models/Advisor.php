@@ -43,5 +43,16 @@ class Advisor extends Model
     {
         return $this->hasMany(MeetingRequest::class, 'id_profiles_advisor');
     }
-
+    
+    public function courses()
+    {
+        return $this->hasManyThrough(
+            Course::class,
+            ProfileEducation::class,
+            'id_profiles_advisor', // Foreign key on profile_education
+            'id',                  // Foreign key on courses table
+            'id',                  // Local key on profiles_advisor
+            'id_courses'           // Local key on profile_education
+        );
+    }
 }

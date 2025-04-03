@@ -18,4 +18,9 @@ export default {
     },
 
     plugins: [forms],
+
+    safelist: [
+        'w-1/6', 'w-1/4', 'w-1/3', 'w-1/2', 'w-2/3', 'w-3/4', 'w-5/6', 'w-full'
+      ],
+      
 };

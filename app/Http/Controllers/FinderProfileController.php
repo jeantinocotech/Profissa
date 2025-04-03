@@ -64,12 +64,16 @@ class FinderProfileController extends Controller
             $interestAreas = DB::table('finder_interest_areas')
             ->join('courses', 'finder_interest_areas.id_courses', '=', 'courses.id')
             ->where('finder_interest_areas.id_profiles_finder', $profile->id)
-            ->pluck('id_courses')
-            ->toArray();
+            ->select('finder_interest_areas.*','courses.courses_name')
+            ->get();
+            
+            //->pluck('id_courses')
+            //->toArray();
+            //dd('Reached show method  - antes loaded courses', $profile->id); // Immediate debugging
 
             $courses = Course::all();
     
-            //dd('Reached show method 1', $profile->id); // Immediate debugging
+            //dd('Reached show method  - loaded courses', $profile->id); // Immediate debugging
             //dd('Reached show method edu:', $educationData); // Immediate debugging
             //dd('Reached show method edu:', $courses); // Immediate debugging
 
@@ -92,6 +96,14 @@ class FinderProfileController extends Controller
 
     public function store(Request $request)
     {
+        
+        Log::info('Store finder profile', [
+            'user_id' => Auth::id(),
+            'data' => $request
+        ]);
+        
+        //dd($request->all());
+
         // Validate incoming request data
         $data = $request->validate([
             'full_name' => 'required|string|max:45',
@@ -99,25 +111,36 @@ class FinderProfileController extends Controller
             'linkedin_url' => 'nullable|url|max:45',
             'instagram_url' => 'nullable|url|max:45',
             'overview' => 'nullable|string',
-            'course' => 'required|array',
+            'course' => 'sometimes|array',
             'course.*' => 'exists:courses,id',
-            'institution' => 'required|array|min:1',
+            'institution' => 'sometimes|array|min:1',
             'institution.*' => 'required|string|max:255',
             'certification' => 'nullable|array',
-            'start_date' => 'required|array',
-            'start_date.*' => 'required|date',
+            'start_date' => 'sometimes|array',
+            'start_date.*' => 'sometimes|date',
             'end_date' => 'nullable|array',
             'comments' => 'nullable|array',
             'is_active' => 'required|boolean', // Add this to your validation
-            'interest_areas' => 'required|array',
-            'interest_areas.*' => 'exists:courses,id',
+            'interest_areas' => 'nullable|array',
+            'interest_areas.*' => 'integer|exists:courses,id',
         ]);
     
         // Add debugging here
-        // dd($data); // Check validated data
+        //dd('Read data from Store', $data); // Check validated data
         // dd(Auth::id()); // Check authenticated user ID
 
+        Log::info('Store finder profile', [
+            'user_id' => Auth::id(),
+            'data' => $request->all()
+        ]);
+
+
         try {
+
+            Log::info('Picture finder profile', [
+                'user_id' => Auth::id(),
+                'data' => $request
+            ]);
 
             // Handle profile picture upload
             $profilePicturePath = null;
@@ -135,13 +158,6 @@ class FinderProfileController extends Controller
                 // Store the path and immediately make it available for the view
                 session()->flash('temp_profile_picture', $profilePicturePath);
 
-                // Store the new picture and get the path relative to the storage/app/public directory
-                //$profilePicturePath = $request->file('profile_picture')
-                //    ->storeAs('profiles', 
-                //        time() . '_' . $request->file('profile_picture')->getClientOriginalName(),
-                //        'public'
-                //    );
-                
                 // Log the file storage information
                 Log::info('Profile picture stored', [
                     'original_name' => $request->file('profile_picture')->getClientOriginalName(),
@@ -151,7 +167,7 @@ class FinderProfileController extends Controller
             }
 
             // More detailed logging
-            Log::info('picture path', [
+            Log::info('Finder picture path', [
                 'Path' => $profilePicturePath
             ]);
 
@@ -193,29 +209,32 @@ class FinderProfileController extends Controller
             ]);
 
             // Process education entries and insert into `profile_education`
-            foreach ($data['course'] as $index => $courseId) {
-    
-                // Insert profile education entry
-                DB::table('profile_education')->insert([
-                    'id_profiles_finder' => $finderProfileId,
-                    'Institution_name' => $data['institution'][$index],
-                    'id_courses' => $courseId,
-                    'certification' => $data['certification'][$index] ?? null,
-                    'dt_start' => $data['start_date'][$index],
-                    'dt_end' => $data['end_date'][$index] ?? null,
-                    'comments' => $data['comments'][$index] ?? null,
-                ]);
-            }
-            
-                // Store interest areas
-                if (!empty($data['interest_areas'])) {
-                    foreach ($data['interest_areas'] as $courseId) {
-                        DB::table('finder_interest_areas')->insert([
-                            'id_profiles_finder' => $finderProfileId,
-                            'id_courses' => $courseId,
-                        ]);
-                    }
+
+            if (!empty($data['course']) && !empty($data['institution']) && !empty($data['start_date'])) {
+                foreach ($data['course'] as $index => $courseId) {
+        
+                    // Insert profile education entry
+                    DB::table('profile_education')->insert([
+                        'id_profiles_finder' => $finderProfileId,
+                        'Institution_name' => $data['institution'][$index],
+                        'id_courses' => $courseId,
+                        'certification' => $data['certification'][$index] ?? null,
+                        'dt_start' => $data['start_date'][$index],
+                        'dt_end' => $data['end_date'][$index] ?? null,
+                        'comments' => $data['comments'][$index] ?? null,
+                    ]);
                 }
+            }
+
+            // Store interest areas
+            if (!empty($data['interest_areas'])) {
+                foreach ($data['interest_areas'] as $courseId) {
+                    DB::table('finder_interest_areas')->insert([
+                        'id_profiles_finder' => $finderProfileId,
+                        'id_courses' => $courseId,
+                    ]);
+                }
+            }
 
             DB::commit();
 
@@ -318,6 +337,7 @@ public function update(Request $request, $id)
         // Clear old education records
         $finder->profileEducation()->delete();
         //dd('Reached show method 1', $data); // Immediate debugging
+
         // Add new education records
         foreach ($data['course'] as $index => $courseId) {
             $finder->profileEducation()->create([
@@ -330,18 +350,26 @@ public function update(Request $request, $id)
             ]);
     }
 
-        DB::table('finder_interest_areas')
-        ->where('id_profiles_finder', $id)
-        ->delete();
+     // Handle interest areas
+     $profile = Finder::find($id);
+    
+     if ($profile) {
+         // Delete existing interest areas
+         DB::table('finder_interest_areas')
+             ->where('id_profiles_finder', $profile->id)
+             ->delete();
+         
+         // Add new interest areas
+         if ($request->has('interest_areas')) {
+             foreach ($request->interest_areas as $courseId) {
+                 DB::table('finder_interest_areas')->insert([
+                     'id_profiles_finder' => $profile->id,
+                     'id_courses' => $courseId,
+                 ]);
+             }
+         }   
+    } 
 
-        if (!empty($data['interest_areas'])) {
-            foreach ($data['interest_areas'] as $courseId) {
-                DB::table('finder_interest_areas')->insert([
-                    'id_profiles_finder' => $id,
-                    'id_courses' => $courseId,
-                ]);
-            }
-        }
 } catch (\Exception $e) {
     Log::error('Finder Profile Update Failed', [
         'user_id' => Auth::id(),
@@ -379,6 +407,10 @@ public function create()
     $educationData = []; 
     $profile = null; // Explicitly pass null profile
 
+    Log::info('Create finder profile', [
+        'user_id' => Auth::id()
+    ]);
+    
     return view('finder-profile', [
         'courses' => $courses,
         'educationData' => $educationData,
@@ -386,12 +418,31 @@ public function create()
     ]);
 }
 
-public function edit($id)
+public function edit($id = null)
 {
-    $profile = Finder::with('profileEducation.education.course')->findOrFail($id);
+    $profile = null;
+    $educationData = [];
+    $interestAreas = [];
+    
+    if ($id) {
+        $profile = Finder::find($id);
+        
+        if ($profile) {
+            // Get education data
+            $educationData = ProfileEducation::where('id_profiles_finder', $profile->id)->get();
+            
+            // Get interest areas - join with courses to get the course names
+            $interestAreas = DB::table('finder_interest_areas')
+                ->join('courses', 'finder_interest_areas.id_courses', '=', 'courses.id')
+                ->where('finder_interest_areas.id_profiles_finder', $profile->id)
+                ->select('courses.id', 'courses.courses_name')
+                ->get();
+        }
+    }
+    
     $courses = Course::all();
-
-    return view('finder-profile', compact('profile', 'courses'));
+    
+    return view('finder-profile', compact('profile', 'courses', 'educationData', 'interestAreas'));
 }
 
 }

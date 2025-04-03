@@ -5,9 +5,12 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="p-6 pt-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+
+            <div class="p-6">   
+
             <form action="{{ isset($profile) && is_object($profile) ? route('advisor-profile.update', $profile->id) : route('advisor-profile.store') }}" method="POST" enctype="multipart/form-data">
                    
             @csrf
@@ -19,7 +22,7 @@
                     @php
                         
                         $profilePicture = null;
-                        $errorImage = 'storage/profile-image.png';
+                        $errorImage = 'storage/profiles/profile-image.png';
                         $debug = [];
 
                         //dd('Profile', $profile); 
@@ -44,14 +47,6 @@
                         $debug['error_image_exists'] = file_exists(public_path($errorImage)) ? 'Yes' : 'No';
 
                     @endphp
-                    
-                    <!-- Debug Information (only visible to admins) -->
-                    @if(auth()->user()->is_admin ?? false)
-                        <div class="bg-gray-100 p-4 mb-4 rounded">
-                            <h3 class="font-bold mb-2">Debug Information:</h3>
-                            <pre class="text-xs">{{ print_r($debug, true) }}</pre>
-                        </div>
-                    @endif
 
                     <!-- Profile Picture Display-->
                     <div class="mb-4">
@@ -62,7 +57,7 @@
                             @endphp
 
                             <div class="mb-4">
-                                <div class="relative w-20 h-20 mb-4">
+                                <div class="relative w-20 h-20 mb-4 flex items-center gap-4">
                                     <img src="{{ $profilePicture ? asset($profilePicture) : asset($errorImage) }}" 
                                         alt="{{ $profilePicture ? 'Profile Picture' : 'Default Profile Picture' }}" 
                                         class="rounded-full w-20 h-20 object-cover"
@@ -72,21 +67,20 @@
                             </div>
 
                         @else
-                            @php
-                                //dd(' else Profile Picture', $profilePicture); 
-                            @endphp
 
-
-                            <div class="relative w-20 h-20 mx-auto mb-4">
-                                <img src="{{ asset('profile-image.png') }}" 
-                                    alt="Default Profile Picture" 
-                                    class="rounded-full w-20 h-20 object-cover"
-                                    id="profile-picture-preview" />                            
+                            <div class="mb-4 flex items-center gap-4">
+                                <div class="w-20 h-20">
+                                    <img src="{{ asset($errorImage) }}" 
+                                        alt="Default Profile Picture" 
+                                        class="rounded-full w-20 h-20 object-cover border border-gray-300 shadow-sm"
+                                        id="profile-picture-preview" />                            
+                                </div>
                             </div>
+
                         @endif
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-4 flex items-center gap-4">
                             <input type="file" id="profile-photo" name="profile_picture" accept="image/*" class="block w-full text-sm text-slate-500
                                 file:mr-4 file:py-2 file:px-4
                                 file:rounded-full file:border-0
@@ -204,23 +198,29 @@
                                             <x-input-label for="comments_{{ $index }}" :value="__('Additional Comments')" />
                                             <textarea id="comments_{{ $index }}" name="comments[]" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">{{ $education->comments ?? '' }}</textarea>
                                         </div>
-                                        <button type="button" class="remove-entry inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">Remove</button>
-                                    </div>
-                                @endforeach
-                            </div>
 
-                            <button type="button" id="add-education" class="mb-4 inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                Add Education
-                            </button>
+                                        <button type="button" id="add-education" class="mb-4 inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                            Add Education
+                                        </button>
+
+                                        <button type="button" class="remove-entry inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                            Del Education
+                                        </button>
+                                       
+
+                                    </div>
+                                @endforeach                          
+
+                            </div>
 
                             <div class="mb-4">
                                 <x-input-label for="is_active" :value="__('Profile Status')" />
-                                <div class="flex items-center">
-                                    <label class="flex items-center space-x-2">
+                                <div class="flex items-center gap-4">
+                                    <label class="flex items-center">
                                         <input type="radio" name="is_active" value="1" {{ old('is_active', $profile->is_active ?? 1) == 1 ? 'checked' : '' }} />
                                         <span>{{ __('Active') }}</span>
                                     </label>
-                                    <label class="flex items-center space-x-2 ml-4">
+                                    <label class="flex items-center">
                                         <input type="radio" name="is_active" value="0" {{ old('is_active', $profile->is_active ?? 1) == 0 ? 'checked' : '' }} />
                                         <span>{{ __('Inactive') }}</span>
                                     </label>
@@ -228,7 +228,7 @@
                                 <x-input-error :messages="$errors->get('is_active')" class="mt-2" />
                             </div>
 
-                    <div class="flex items-center justify-end mt-4">
+                    <div class="mt-6">
                         <x-primary-button>
                             {{ __('Save Profile') }}
                         </x-primary-button>
@@ -244,6 +244,7 @@
 
                 </form>
             </div>
+        </div>
         </div>
     </div>
 </x-app-layout>
