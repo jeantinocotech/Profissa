@@ -10,8 +10,10 @@ class FinderInterestAreas extends Model
 {
     
     use HasFactory;
-
+    
     protected $table = 'finder_interest_areas';
+
+    public $timestamps = false;
 
     protected $fillable = ['id_courses',
                            'id_profiles_finder',];                   
@@ -20,11 +22,6 @@ class FinderInterestAreas extends Model
     public function finder()
     {
         return $this->belongsTo(Finder::class, 'id_profiles_finder');
-    }
-    
-    public function course()
-    {
-        return $this->belongsTo(Course::class, 'id_courses');
     }
      
 }

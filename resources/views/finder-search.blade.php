@@ -68,16 +68,16 @@
                    
             </div>
 
-            <div class="flex justify-center gap-6">
+            <div class="flex gap-6">
 
                 <button type="button"
                         onclick="clearSelections()"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        class="inline-flex px-4 py-2 bg-red-600 text-white rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         clearSelections
                 </button>
                 
                 <button type="submit"
-                        class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        class="inline-flex px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         Search Advisors
                 </button>
             
@@ -86,7 +86,10 @@
         </form>
         
         @if(isset($matchingAdvisors))
-        <div class="mt-8">
+
+        <div class="top-matching gap-6 mb-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md">
+        <div class="gap-6 mb-4">
+       
             <h2 class="text-xl font-semibold mb-4">Top Matching Advisors</h2>
 
             @if(count($matchingAdvisors) > 0)
@@ -228,6 +231,15 @@
                                 @endphp    
                             @endif
                         </div>
+                        <!-- Adicionar no arquivo finder-search.blade.php -->
+                        <!-- Inserir dentro do loop foreach($matchingAdvisors as $advisor) -->
+                        <!-- Colocar logo antes do fechamento do </li> -->
+
+                        <a href="{{ route('requests.create', ['advisorId' => $advisor->id]) }}"
+                        class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            Request Meeting
+                        </a>
+
                     </li>
                 @endforeach
 
@@ -235,6 +247,7 @@
             @else
                 <div class="text-gray-500">No advisors matched your search criteria.</div>
             @endif
+        </div>
         </div>
         @endif
 

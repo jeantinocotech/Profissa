@@ -140,7 +140,10 @@
                                     @foreach($interestAreas as $area)
                                         <div class="areas-tag bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2">
                                             <span>{{ $area->courses_name }}</span> 
-                                            <input type="hidden" name="interest_areas[]" value="{{ $area->id }}" id="interest_{{ $area->id }}">
+                                            <!-- <input type="hidden" name="interest_areas[]" value="{{ $area->id }}" id="interest_{{ $area->id_courses }}">
+                                                 <input type="hidden" name="interest_areas[{{ $loop->index }}][id]" value="{{ $area->id }}">
+                                            -->
+                                            <input type="hidden" name="interest_areas[{{ $loop->index }}][id]" value="{{ $area->id_courses }}">
                                             <button type="button" class="remove-area text-blue-600 hover:text-blue-800">&times;</button>
                                         </div>
                                     @endforeach
@@ -400,13 +403,36 @@
 
             // Event delegation for remove button
             educationSection.addEventListener('click', (event) => {
-                if (event.target.classList.contains('remove-entry')) {
-                    event.target.closest('.education-entry').remove();
-                }
-            });
+            if (event.target.classList.contains('remove-entry')) {
+                event.preventDefault(); // Prevent default button behavior
+                event.target.closest('.education-entry').remove();
+                reindexEducationEntries(); // Call the re-indexing function
+            }
+        });
+
         } else {
             console.error('Add education button or section not found');
         }
     });
+
+    function reindexEducationEntries() {
+            const entries = document.querySelectorAll('.education-entry');
+            entries.forEach((entry, index) => {
+                entry.querySelectorAll('input, select, textarea').forEach(element => {
+                    const name = element.getAttribute('name');
+                    if (name) {
+                        const newName = name.replace(/\[\d+\]/, `[${index}]`);
+                        element.setAttribute('name', newName);
+                        // Update the id as well, if needed
+                        const id = element.getAttribute('id');
+                        if (id) {
+                            const newId = id.replace(/_\d+/, `_${index}`);
+                            element.setAttribute('id', newId);
+                        }
+                    }
+                });
+            });
+        }
+
 
 </script>

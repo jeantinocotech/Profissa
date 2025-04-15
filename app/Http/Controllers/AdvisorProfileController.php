@@ -98,6 +98,9 @@ class AdvisorProfileController extends Controller
 
     public function store(Request $request)
     {
+        
+        Log::info('Storing advisor profile');    
+        
         // Validate incoming request data
         $data = $request->validate([
             'full_name' => 'required|string|max:45',
@@ -105,13 +108,13 @@ class AdvisorProfileController extends Controller
             'linkedin_url' => 'nullable|url|max:45',
             'instagram_url' => 'nullable|url|max:45',
             'overview' => 'nullable|string',
-            'course' => 'required|array',
+            'course' => 'nullable|array|min:1',
             'course.*' => 'exists:courses,id',
-            'institution' => 'required|array|min:1',
-            'institution.*' => 'required|string|max:255',
+            'institution' => 'nullable|array|min:1',
+            'institution.*' => 'nullable|string|max:255',
             'certification' => 'nullable|array',
-            'start_date' => 'required|array',
-            'start_date.*' => 'required|date',
+            'start_date' => 'nullable|array',
+            'start_date.*' => 'nullable|date',
             'end_date' => 'nullable|array',
             'comments' => 'nullable|array',
             'is_active' => 'required|boolean', 
@@ -120,6 +123,10 @@ class AdvisorProfileController extends Controller
         ]);
     
         // Add debugging here
+        Log::info('Storing advisor profile', [
+            'user_id' => Auth::id(),
+            'data' => $data
+        ]);    
         //dd($data); // Check validated data
         // dd(Auth::id()); // Check authenticated user ID
 
@@ -448,6 +455,11 @@ public function create()
     $profile = null; // Explicitly pass null profile
     $skillsData = collect([]); // Add empty collection for skills
 
+    $user = Auth::user();
+
+    if (\App\Models\Finder::where('user_id', $user->id)->exists()) {
+        abort(403, 'You already have a profile as a finder.');
+    }
 
     return view('advisor-profile', [
         'courses' => $courses,

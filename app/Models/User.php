@@ -45,4 +45,25 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function advisor()
+    {
+        return $this->hasOne(\App\Models\Advisor::class, 'user_id');
+    }
+
+    public function finder()
+    {
+        return $this->hasOne(\App\Models\Finder::class, 'user_id');
+    }
+
+    public function getIsAdvisorAttribute()
+    {
+        return $this->advisor !== null;
+    }
+
+    public function getIsFinderAttribute()
+    {
+        return $this->finder !== null;
+    }
+
 }

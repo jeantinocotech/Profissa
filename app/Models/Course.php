@@ -18,4 +18,10 @@ class Course extends Model
     {
         return $this->hasMany(ProfileEducation::class, 'Id_courses', 'id');
     }
+
+    public function interest_areas()
+    {
+        return $this->hasMany(FinderInterestAreas::class, 'Id_courses', 'id');
+}
+
 }

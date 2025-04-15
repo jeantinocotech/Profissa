@@ -11,18 +11,41 @@
                 </div>
 
                 <!-- Navigation Links -->
+                @php
+                    $user = Auth::user();
+                    $hasAdvisor = \App\Models\Advisor::where('user_id', $user->id)->exists();
+                    $hasFinder = \App\Models\Finder::where('user_id', $user->id)->exists();
+                @endphp
+
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
-                        {{ __('Advisor Profile') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
-                        {{ __('Finder Profile') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('advisor.search')" :active="request()->routeIs('advisor.search')">
-                        {{ __('Find an Advisor') }}
+
+                    @if (!$hasAdvisor && !$hasFinder)
+                        {{-- Pode escolher entre ser Advisor ou Finder --}}
+                        <x-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
+                        {{ __('Advisor') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
+                            {{ __('Finder') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if ($hasAdvisor)
+                        <x-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
+                            {{ __('Advisor') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if ($hasFinder)
+                        <x-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
+                            {{ __('Finder') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('advisor.search')" :active="request()->routeIs('advisor.search')">
+                             {{ __('Find an Advisor') }}
+                    @endif
+                                        
                     </x-nav-link>
                 </div>
             </div>

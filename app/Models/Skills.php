@@ -26,12 +26,9 @@ class Skills extends Model
 
     }
     
-
-    
     public function finders()
     {
-        return $this->belongsToMany(Finder::class, 'finder_skills_interests', 'id_skills', 'id_profiles_finder')
-            ->withPivot('importance_level');
+        return $this->belongsToMany(Finder::class, 'finder_skills_interests', 'id_skills', 'id_profiles_finder');
     }
 
      // Direct relationship with advisor_skills

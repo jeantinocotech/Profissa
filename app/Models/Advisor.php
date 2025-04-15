@@ -55,4 +55,10 @@ class Advisor extends Model
             'id_courses'           // Local key on profile_education
         );
     }
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
 }

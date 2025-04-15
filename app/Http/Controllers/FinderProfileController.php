@@ -13,7 +13,7 @@ use App\Models\Course;
 use App\Models\Education;
 use App\Models\ProfileEducation;
 use App\Models\FinderInterestArea;
-
+use App\Models\FinderInterestAreas;
 
 class FinderProfileController extends Controller
 {
@@ -34,7 +34,7 @@ class FinderProfileController extends Controller
             $user = Auth::user();
             
             // Debugging: Log user details
-            Log::info('User Details', [
+            Log::info('SHOW METHOD 1', [
                 'user_id' => $user->id,
                 'user_email' => $user->email
             ]);
@@ -73,6 +73,11 @@ class FinderProfileController extends Controller
 
             $courses = Course::all();
     
+             // Debugging: Log user details
+             Log::info('SHOW METHOD INTEREST AREAS', [
+                $interestAreas
+            ]);
+
             //dd('Reached show method  - loaded courses', $profile->id); // Immediate debugging
             //dd('Reached show method edu:', $educationData); // Immediate debugging
             //dd('Reached show method edu:', $courses); // Immediate debugging
@@ -102,7 +107,7 @@ class FinderProfileController extends Controller
             'data' => $request
         ]);
         
-        //dd($request->all());
+        //dd('Store inicial',$request->all());
 
         // Validate incoming request data
         $data = $request->validate([
@@ -259,31 +264,41 @@ class FinderProfileController extends Controller
         }
     }
 
+
 public function update(Request $request, $id)
 {
-    // Validate the incoming request data
-    $data = $request->validate([
-        'full_name' => 'required|string|max:255',
-        'linkedin_url' => 'nullable|url|max:255',
-        'instagram_url' => 'nullable|url|max:255',
-        'overview' => 'required|string|max:1000',
-        'profile_picture' => 'nullable|image|max:5120', // Max 5MB
-        'is_active' => 'required|boolean', // Added validation for active status
-        'course' => 'array',
-        'course.*' => 'exists:courses,id',
-        'institution' => 'array',
-        'institution.*' => 'required|string|max:255',
-        'certification' => 'array',
-        'certification.*' => 'nullable|string|max:255',
-        'start_date' => 'array',
-        'start_date.*' => 'required|date',
-        'end_date' => 'array',
-        'end_date.*' => 'nullable|date',
-        'comments' => 'array',
-        'comments.*' => 'nullable|string|max:500',
-        'interest_areas' => 'required|array',
-        'interest_areas.*' => 'exists:courses,id',
+ 
+    Log::info('INICIAL UPDATE PROFILE', [
+        'user_id' => Auth::id(),
+        'data' => $request
     ]);
+    
+    Log::info('Raw request data', $request->all());
+
+    // Validate incoming request data
+    $data = $request->validate([
+        'full_name' => 'nullable|string|max:255',  // Changed from required to nullable
+        'profile_picture' => 'nullable|image|max:5120',
+        'linkedin_url' => 'nullable|string|max:255',  // Changed from url to string
+        'instagram_url' => 'nullable|string|max:255',  // Changed from url to string
+        'overview' => 'nullable|string',
+        'course' => 'nullable|array',  // Changed from sometimes to nullable
+        'course.*' => 'nullable',  // Removed exists check
+        'institution' => 'nullable|array',  // Removed min:1
+        'institution.*' => 'nullable|string|max:255',  // Changed from required to nullable
+        'certification' => 'nullable|array',
+        'start_date' => 'nullable|array',  // Changed from sometimes to nullable
+        'start_date.*' => 'nullable',  // Removed date check
+        'end_date' => 'nullable|array',
+        'comments' => 'nullable|array',
+        'is_active' => 'nullable|boolean',  // Changed from required to nullable
+        'interest_areas' => 'nullable|array',
+        'interest_areas.*' => 'nullable',  // Removed exists check
+    ]);
+
+    Log::info('Update pos validation', $data);
+    
+    //dd($data); // Check overview
 
     try {
         
@@ -310,65 +325,89 @@ public function update(Request $request, $id)
 
     // Handle profile picture upload
 
-        if ($request->hasFile('profile_picture')) {
+    if ($request->hasFile('profile_picture')) {
 
-            // Delete the old picture if it exists
-            if ($oldProfilePicture && Storage::disk('public')->exists($oldProfilePicture)) {
-                Storage::disk('public')->delete($oldProfilePicture);
-            }
-
-            // Store the new picture
-            $file = $request->file('profile_picture');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $profilePicturePath = $file->storeAs('profiles', $filename, 'public');
-        
-            $finder->profile_picture = $profilePicturePath;
-            
-            // Make the new image immediately available
-            session()->flash('temp_profile_picture', $profilePicturePath);
+        // Delete the old picture if it exists
+        if ($oldProfilePicture && Storage::disk('public')->exists($oldProfilePicture)) {
+            Storage::disk('public')->delete($oldProfilePicture);
         }
-         
-        //dd($finder->full_name); // Check overview
-        //dd($data['full_name']); // Check overview
-       
-        $finder->save();
 
-        // Update education details
-        // Clear old education records
-        $finder->profileEducation()->delete();
-        //dd('Reached show method 1', $data); // Immediate debugging
+        // Store the new picture
+        $file = $request->file('profile_picture');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $profilePicturePath = $file->storeAs('profiles', $filename, 'public');
+    
+        $finder->profile_picture = $profilePicturePath;
+        
+        // Make the new image immediately available
+        session()->flash('temp_profile_picture', $profilePicturePath);
+    }
+        
+    //dd($finder->full_name); // Check overview
+    //dd($data['full_name']); // Check overview
+    
+    $finder->save();
 
-        // Add new education records
+    // Update education details
+    // First, log the ID we're trying to update
+    Log::info('Deleting education records for profile', ['profile_id' => $id]);
+    
+    // Clear old education records
+    //$finder->profileEducation()->delete();
+    //dd('Reached show method 1', $data); // Immediate debugging
+    // Explicitly delete via direct query for better debugging
+    $deletedCount = DB::table('profile_education')
+    ->where('id_profiles_finder', $id)
+    ->delete();
+
+    Log::info('Deleted education records', ['count' => $deletedCount]);
+    // Now add new education records
+    if (!empty($data['course'])) {
         foreach ($data['course'] as $index => $courseId) {
-            $finder->profileEducation()->create([
-                'institution_name' => $data['institution'][$index],
+            DB::table('profile_education')->insert([
+                'id_profiles_finder' => $id,
+                'Institution_name' => $data['institution'][$index],
                 'id_courses' => $courseId,
                 'certification' => $data['certification'][$index] ?? null,
                 'dt_start' => $data['start_date'][$index],
                 'dt_end' => $data['end_date'][$index] ?? null,
                 'comments' => $data['comments'][$index] ?? null,
             ]);
+        }
+        
+        Log::info('Added new education records', ['count' => count($data['course'])]);
     }
-
+        
      // Handle interest areas
-     $profile = Finder::find($id);
-    
-     if ($profile) {
-         // Delete existing interest areas
-         DB::table('finder_interest_areas')
-             ->where('id_profiles_finder', $profile->id)
-             ->delete();
-         
-         // Add new interest areas
-         if ($request->has('interest_areas')) {
-             foreach ($request->interest_areas as $courseId) {
-                 DB::table('finder_interest_areas')->insert([
-                     'id_profiles_finder' => $profile->id,
-                     'id_courses' => $courseId,
-                 ]);
-             }
-         }   
-    } 
+
+     $data = $request->all();
+
+     Log::info('Antes do IF - Processing Interest Areas', $data);
+
+      // Apaga todas as áreas de interesse anteriores do Finder
+     FinderInterestAreas::where('id_profiles_finder', $id)->delete();
+     Log::info('Deleting interest areas for profile', [$id]);
+
+     if (isset($data['interest_areas'])) {
+
+        Log::info('Dentro do IF - Processing Interest Areas', $data);
+
+        if (isset($data['interest_areas'])) {
+            foreach ($data['interest_areas'] as $area) {
+                $courseId = is_array($area) && isset($area['id_courses']) ? $area['id_courses']
+                          : (is_array($area) && isset($area['id']) ? $area['id']
+                          : (is_string($area) ? $area : null));
+        
+                if ($courseId) {
+                    FinderInterestAreas::create([
+                        'id_profiles_finder' => $id,
+                        'id_courses' => $courseId,
+                    ]);
+                }
+            }
+        }
+
+     }
 
 } catch (\Exception $e) {
     Log::error('Finder Profile Update Failed', [
@@ -380,24 +419,27 @@ public function update(Request $request, $id)
         'data' => $data
     ]);
 
-
-
     return redirect()->back()->with('error', 'Failed to update profile: ' . $e->getMessage());
 }
 
-    //'id_profiles_finder' => $finderProfileId,    --check if this is needed
+//'id_profiles_finder' => $finderProfileId,    --check if this is needed
 
-    // More detailed logging
-    Log::info('Storing finder profile', [
-        'user_id' => Auth::id(),
-        'data' => $data
-    ]);
+// More detailed logging
+Log::info('Storing finder profile', [
+    'user_id' => Auth::id(),
+    'data' => $data
+]);
 
-    DB::commit();
-    
-    return redirect()->route('dashboard')->with('success', 'Profile updated successfully!');
+DB::commit();
 
-    redirect()->route('finder-profile.edit')->with('success', 'Profile created successfully!');
+Log::info('FIM UPDATE PROFILE', [
+    'user_id' => Auth::id(),
+    'data' => $request
+]);
+
+return redirect()->route('dashboard')->with('success', 'Profile updated successfully!');
+
+redirect()->route('finder-profile.edit')->with('success', 'Profile created successfully!');
 
 }
 
@@ -411,6 +453,12 @@ public function create()
         'user_id' => Auth::id()
     ]);
     
+    $user = Auth::user();
+
+    if (\App\Models\Advisor::where('user_id', $user->id)->exists()) {
+        abort(403, 'You already have an advisor assigned to you.');
+    }
+
     return view('finder-profile', [
         'courses' => $courses,
         'educationData' => $educationData,

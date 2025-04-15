@@ -1,7 +1,11 @@
-{{-- resources/views/meeting/requests-list.blade.php --}}
-@extends('layouts.app')
+<x-app-layout>
 
-@section('content')
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('List of Requested Meetings ') }}
+        </h2>
+    </x-slot>
+
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-2xl font-bold mb-6">Meeting Requests</h1>
 
@@ -98,10 +102,8 @@
         </button>
     </div>
 </div>
+</x-app-layout>
 
-@endsection
-
-@section('scripts')
 <script>
     function viewResponse(requestId) {
         // In a real application, you would fetch this data from your server
@@ -124,4 +126,3 @@
         document.getElementById('responseModal').classList.add('hidden');
     }
 </script>
-@endsection

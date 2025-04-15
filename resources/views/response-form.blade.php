@@ -1,7 +1,11 @@
-{{-- resources/views/meeting/response-form.blade.php --}}
-@extends('layouts.app')
+<x-app-layout>
 
-@section('content')
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Respond to Meeting Request') }}
+        </h2>
+    </x-slot>
+
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div class="p-6">
@@ -9,44 +13,45 @@
 
             <div class="mb-6 bg-gray-50 rounded-lg p-4">
                 <div class="flex items-center mb-4">
-                    @if ($meetingRequest->finder->profile_picture)
-                        <img src="{{ asset('storage/' . $meetingRequest->finder->profile_picture) }}" 
-                             alt="{{ $meetingRequest->finder->full_name }}"
+                    @if ($request->finder->profile_picture)
+                        <img src="{{ asset('storage/' . $request->finder->profile_picture) }}" 
+                             alt="{{ $request->finder->full_name }}"
                              class="w-12 h-12 rounded-full object-cover">
                     @else
                         <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
                             <span class="text-xl text-gray-600">
-                                {{ substr($meetingRequest->finder->full_name, 0, 1) }}
+                                {{ substr($request->finder->full_name, 0, 1) }}
                             </span>
                         </div>
                     @endif
                     <div class="ml-4">
-                        <h2 class="font-medium">{{ $meetingRequest->finder->full_name }}</h2>
+                        <h2 class="font-medium">{{ $request->finder->full_name }}</h2>
                         <p class="text-sm text-gray-600">
-                            Requested: {{ $meetingRequest->created_at->format('M d, Y H:i') }}
+                            Requested: {{ $request->created_at->format('M d, Y H:i') }}
                         </p>
                     </div>
                 </div>
 
                 <div class="mb-4">
                     <h3 class="font-medium mb-2">Finder's Message:</h3>
-                    <p class="text-gray-700">{{ $meetingRequest->finder_message }}</p>
+                    <p class="text-gray-700">{{ $request->finder_message }}</p>
                 </div>
 
                 <div>
-                    <h3 class="font-medium mb-2">Skills of Interest:</h3>
+                    <h3 class="font-medium mb-2">Interest Areas:</h3>
                     <div class="flex flex-wrap gap-2">
-                        @foreach($meetingRequest->finder->skills as $skill)
+                    @if($request->finder->interest_areas->count() > 0)
+                        @foreach($request->finder->interest_areas as $area)
                             <span class="inline-block bg-white rounded-full px-3 py-1 text-sm font-medium text-gray-700">
-                                {{ $skill->name }}
-                                <span class="text-gray-500">(Priority: {{ $skill->pivot->importance_level }})</span>
+                                {{ $area->courses_name }}
                             </span>
                         @endforeach
+                    @endif
                     </div>
                 </div>
             </div>
 
-            <form action="{{ route('meeting.respond', $meetingRequest->id) }}" method="POST">
+            <form action="{{ route('meeting.respond', $request->id) }}" method="POST">
                 @csrf
                 
                 <div class="mb-6">
@@ -83,7 +88,7 @@
                         Response Message
                     </label>
                     <textarea id="response" 
-                              name="response" 
+                              name="advisor_response" 
                               rows="4" 
                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 
                                      focus:ring focus:ring-indigo-200 focus:ring-opacity-50 @error('response') border-red-500 @enderror"
@@ -93,17 +98,18 @@
                     @enderror
                 </div>
 
-                <div class="flex justify-end space-x-4">
+                <div class="flex justify-end space-x-4 gap-6">
                     <button type="button" 
                             onclick="window.history.back()"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 
+                            class="gap-6 px-4 py-2 border border-gray-300 rounded-md text-gray-700 
                                    hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 
                                    focus:ring-indigo-500">
                         Cancel
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 
-                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            class="gap-6 px-4 py-2 border border-gray-300 rounded-md text-gray-700 
+                                   hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 
+                                   focus:ring-indigo-500">
                         Submit Response
                     </button>
                 </div>
@@ -111,4 +117,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-app-layout>

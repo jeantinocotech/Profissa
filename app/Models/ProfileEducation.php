@@ -22,6 +22,11 @@ class ProfileEducation extends Model
     {
         return $this->belongsTo(Advisor::class, 'id_profiles_advisor');
     }
-    
+ 
+    public function finder()
+    {
+        return $this->belongsTo(Finder::class, 'id_profiles_finder');
+    }
+
 }
 

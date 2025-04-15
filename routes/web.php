@@ -12,10 +12,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -66,6 +62,7 @@ Route::get('/phpinfo', function () {
     phpinfo();
 });
 
+// Advisor matching routes
 Route::post('/meeting-request/{advisorId}', [AdvisorMatchingController::class, 'createMeetingRequest']);
 Route::post('/meeting-response/{meetingRequest}', [AdvisorMatchingController::class, 'respondToRequest']);
 Route::get('/api/skills/search', [AdvisorProfileController::class, 'searchSkills']);
@@ -75,13 +72,32 @@ Route::post('/advisor-matching/find', [AdvisorMatchingController::class, 'find']
 
 Route::post('/advisor-request', [AdvisorMatchingController::class, 'sendRequest'])->name('advisor-request.send');
 
-
-
-
-// Advisor matching routes
 Route::get('/advisor-matches', [AdvisorMatchingController::class, 'findMatchingAdvisors'])
     ->name('advisor.matches')
     ->middleware('auth');
 
+Route::get('/requests/create/{advisorId}', [MeetingRequestController::class, 'create'])->name('requests.create');
+Route::post('/requests/store', [MeetingRequestController::class, 'store'])->name('requests.store');
+
+Route::get('/requests', [MeetingRequestController::class, 'index'])->name('requests.index');
+
+Route::get('/meeting/respond/{meetingRequest}', [MeetingRequestController::class, 'responseForm'])
+    ->name('meeting.respond.form');
+
+Route::post('/meeting/respond/{meetingRequest}', [MeetingRequestController::class, 'response'])->name('meeting.respond');
+
+// Cancelamento direto para reuniões pendentes
+Route::delete('/meeting-requests/{meetingRequest}/cancel', [MeetingRequestController::class, 'cancel'])
+    ->name('meeting.cancel');
+
+// Solicitação de cancelamento para reuniões aceitas
+Route::post('/meeting-requests/{meetingRequest}/cancel-request', [MeetingRequestController::class, 'requestCancellation'])
+    ->name('meeting.cancel.request');
+
+// Resposta do Advisor à solicitação de cancelamento
+Route::post('/meeting-requests/{meetingRequest}/approve-cancellation', [MeetingRequestController::class, 'approveCancellation'])
+    ->name('meeting.cancel.approve');
+Route::post('/meeting-requests/{meetingRequest}/deny-cancellation', [MeetingRequestController::class, 'denyCancellation'])
+    ->name('meeting.cancel.deny');
 
 require __DIR__.'/auth.php';

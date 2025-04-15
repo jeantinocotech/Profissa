@@ -34,25 +34,29 @@ class Finder extends Model
      }
 
      public function interest_areas()
-{
-    return $this->belongsToMany(Course::class, 'finder_interest_areas', 'id_profiles_finder', 'id_courses');
-}
+     {
+         return $this->belongsToMany(Course::class, 'finder_interest_areas', 'id_profiles_finder', 'id_courses');
+     }
+     
+    public function meetingRequests()
+    {
+        return $this->hasMany(MeetingRequest::class, 'id_profiles_finder');
+    }
 
-   public function meetingRequests()
-   {
-       return $this->hasMany(MeetingRequest::class, 'id_profiles_finder');
-   }
-
-   public function courses()
-   {
-       return $this->hasManyThrough(
-           Course::class,
-           FinderInterestAreas::class,
-           'id_profiles_finder', // Foreign key on interest_areas
-           'id',                  // Foreign key on courses table
-           'id',                  // Local key on profiles_finder
-           'id_courses'           // Local key on interest_areas
-       );
-   }
+    public function courses()
+    {
+        return $this->hasManyThrough(
+            Course::class,
+            FinderInterestAreas::class,
+            'id_profiles_finder', // Foreign key on interest_areas
+            'id',                  // Foreign key on courses table
+            'id',                  // Local key on profiles_finder
+            'id_courses'           // Local key on interest_areas
+        );
+    }
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
 
 }

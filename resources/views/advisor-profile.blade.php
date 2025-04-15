@@ -154,80 +154,76 @@
                         </div>
                     </div>
 
-                            <!-- Education Section -->
-                            <div id="education-section" class="mt-6">
-                                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">{{ __('Education') }}</h3>
+                    <!-- Education Section -->
+                    <div id="education-section" class="mt-6">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">{{ __('Education') }}</h3>
 
-                                <!-- Existing Education Entries -->
-                                @foreach($educationData as $index => $education)
-                                    <div class="education-entry mb-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md">
-                                        <div class="mb-4">
-                                            <x-input-label for="course_{{ $index }}" :value="__('Course')" />
-                                            <select name="course[]" id="course_{{ $index }}" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
-                                            <option value="">-- Select a Course --</option>
-                                                @foreach ($courses as $course)
-                                                    <option value="{{ $course->id }}" {{ $course->id == $education->id_courses ? 'selected' : '' }}>
-                                                    {{ $course->courses_name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="mb-4">
-                                            <x-input-label for="institution_{{ $index }}" :value="__('Institution')" />
-                                            <x-text-input id="institution_{{ $index }}" name="institution[]" type="text" class="mt-1 block w-full" :value="$education->institution_name ?? ''" required />
-                                        </div>
-                                                
-                                        <div class="mb-4">
-                                            <x-input-label for="certification_{{ $index }}" :value="__('Certification')" />
-                                            <x-text-input id="certification_{{ $index }}" name="certification[]" type="text" class="mt-1 block w-full" :value="$education->certification ?? ''" />
-                                        </div>
-                                        
-                                        <div class="grid grid-cols-2 gap-4 mb-4">
-                                            <div>
-                                                <x-input-label for="start_date_{{ $index }}" :value="__('Start Date')" />
-                                                <x-text-input id="start_date_{{ $index }}" name="start_date[]" type="date" class="mt-1 block w-full" :value="$education->dt_start ?? ''" required />
-                                            </div>
-                                            <div>
-                                                <x-input-label for="end_date_{{ $index }}" :value="__('End Date')" />
-                                                <x-text-input id="end_date_{{ $index }}" name="end_date[]" type="date" class="mt-1 block w-full" :value="$education->dt_end ?? ''" />
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="mb-4">
-                                            <x-input-label for="comments_{{ $index }}" :value="__('Additional Comments')" />
-                                            <textarea id="comments_{{ $index }}" name="comments[]" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">{{ $education->comments ?? '' }}</textarea>
-                                        </div>
-
-                                        <button type="button" id="add-education" class="mb-4 inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                            Add Education
-                                        </button>
-
-                                        <button type="button" class="remove-entry inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                            Del Education
-                                        </button>
-                                       
-
-                                    </div>
-                                @endforeach                          
-
-                            </div>
-
-                            <div class="mb-4">
-                                <x-input-label for="is_active" :value="__('Profile Status')" />
-                                <div class="flex items-center gap-4">
-                                    <label class="flex items-center">
-                                        <input type="radio" name="is_active" value="1" {{ old('is_active', $profile->is_active ?? 1) == 1 ? 'checked' : '' }} />
-                                        <span>{{ __('Active') }}</span>
-                                    </label>
-                                    <label class="flex items-center">
-                                        <input type="radio" name="is_active" value="0" {{ old('is_active', $profile->is_active ?? 1) == 0 ? 'checked' : '' }} />
-                                        <span>{{ __('Inactive') }}</span>
-                                    </label>
+                        <!-- Existing Education Entries -->
+                        @foreach($educationData as $index => $education)
+                            <div class="education-entry mb-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md">
+                                <div class="mb-4">
+                                    <x-input-label for="course_{{ $index }}" :value="__('Course')" />
+                                    <select name="course[]" id="course_{{ $index }}" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
+                                    <option value="">-- Select a Course --</option>
+                                        @foreach ($courses as $course)
+                                            <option value="{{ $course->id }}" {{ $course->id == $education->id_courses ? 'selected' : '' }}>
+                                            {{ $course->courses_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <x-input-error :messages="$errors->get('is_active')" class="mt-2" />
+                                
+                                <div class="mb-4">
+                                    <x-input-label for="institution_{{ $index }}" :value="__('Institution')" />
+                                    <x-text-input id="institution_{{ $index }}" name="institution[]" type="text" class="mt-1 block w-full" :value="$education->institution_name ?? ''" required />
+                                </div>
+                                        
+                                <div class="mb-4">
+                                    <x-input-label for="certification_{{ $index }}" :value="__('Certification')" />
+                                    <x-text-input id="certification_{{ $index }}" name="certification[]" type="text" class="mt-1 block w-full" :value="$education->certification ?? ''" />
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <x-input-label for="start_date_{{ $index }}" :value="__('Start Date')" />
+                                        <x-text-input id="start_date_{{ $index }}" name="start_date[]" type="date" class="mt-1 block w-full" :value="$education->dt_start ?? ''" required />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="end_date_{{ $index }}" :value="__('End Date')" />
+                                        <x-text-input id="end_date_{{ $index }}" name="end_date[]" type="date" class="mt-1 block w-full" :value="$education->dt_end ?? ''" />
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <x-input-label for="comments_{{ $index }}" :value="__('Additional Comments')" />
+                                    <textarea id="comments_{{ $index }}" name="comments[]" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">{{ $education->comments ?? '' }}</textarea>
+                                </div>
+                                <button type="button" class="remove-entry inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">Remove</button>
                             </div>
+                        @endforeach                          
 
+                    </div>
+
+                    <button type="button" id="add-education" class="mb-4 inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        Add Education
+                    </button>
+
+                    <div class="mb-4">
+                        <x-input-label for="is_active" :value="__('Profile Status')" />
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="is_active" value="1" {{ old('is_active', $profile->is_active ?? 1) == 1 ? 'checked' : '' }} />
+                                <span>{{ __('Active') }}</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="is_active" value="0" {{ old('is_active', $profile->is_active ?? 1) == 0 ? 'checked' : '' }} />
+                                <span>{{ __('Inactive') }}</span>
+                            </label>
+                        </div>
+                        <x-input-error :messages="$errors->get('is_active')" class="mt-2" />
+                    </div>
+
+                    
                     <div class="mt-6">
                         <x-primary-button>
                             {{ __('Save Profile') }}
