@@ -29,6 +29,7 @@ class FinderProfileController extends Controller
         //$profile = DB::table('profiles_finder')
         //->where('user_id', $user->id)
         //->first();
+        Log::info('SHOW METHOD INICIO');
 
         try {
             $user = Auth::user();
@@ -102,42 +103,41 @@ class FinderProfileController extends Controller
     public function store(Request $request)
     {
         
+        Log::info('Store metodo INICIO');
+
         Log::info('Store finder profile', [
             'user_id' => Auth::id(),
-            'data' => $request
+            'data' => $request->all()
         ]);
         
         //dd('Store inicial',$request->all());
 
         // Validate incoming request data
         $data = $request->validate([
-            'full_name' => 'required|string|max:45',
+            'full_name' => 'required|string|max:155',
             'profile_picture' => 'nullable|image|max:5120', // Max 5MB
-            'linkedin_url' => 'nullable|url|max:45',
-            'instagram_url' => 'nullable|url|max:45',
+            'linkedin_url' => 'nullable|url|max:155',
+            'instagram_url' => 'nullable|url|max:155',
             'overview' => 'nullable|string',
-            'course' => 'sometimes|array',
+            'course' => 'nullable|array',
             'course.*' => 'exists:courses,id',
-            'institution' => 'sometimes|array|min:1',
-            'institution.*' => 'required|string|max:255',
+            'institution' => 'nullable|array',
+            'institution.*' => 'nullable|string|max:255',
             'certification' => 'nullable|array',
-            'start_date' => 'sometimes|array',
-            'start_date.*' => 'sometimes|date',
+            'start_date' => 'nullable|array',
+            'start_date.*' => 'nullable|date',
             'end_date' => 'nullable|array',
             'comments' => 'nullable|array',
             'is_active' => 'required|boolean', // Add this to your validation
             'interest_areas' => 'nullable|array',
-            'interest_areas.*' => 'integer|exists:courses,id',
+            'interest_areas.*' => 'exists:courses,id'
         ]);
     
         // Add debugging here
         //dd('Read data from Store', $data); // Check validated data
         // dd(Auth::id()); // Check authenticated user ID
 
-        Log::info('Store finder profile', [
-            'user_id' => Auth::id(),
-            'data' => $request->all()
-        ]);
+        Log::info('After Validate - Store finder profile');
 
 
         try {
@@ -207,7 +207,6 @@ class FinderProfileController extends Controller
                 'linkedin_url' => $data['linkedin_url'] ?? null,
                 'instagram_url' => $data['instagram_url'] ?? null,
                 'overview' => $data['overview'] ?? null,
-                'profile_completed' => 0,
                 'is_active' => $data['is_active'],
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -268,6 +267,8 @@ class FinderProfileController extends Controller
 public function update(Request $request, $id)
 {
  
+    Log::info('UPDATE metodo INICIO');
+
     Log::info('INICIAL UPDATE PROFILE', [
         'user_id' => Auth::id(),
         'data' => $request
@@ -277,10 +278,10 @@ public function update(Request $request, $id)
 
     // Validate incoming request data
     $data = $request->validate([
-        'full_name' => 'nullable|string|max:255',  // Changed from required to nullable
+        'full_name' => 'nullable|string|max:155',  // Changed from required to nullable
         'profile_picture' => 'nullable|image|max:5120',
-        'linkedin_url' => 'nullable|string|max:255',  // Changed from url to string
-        'instagram_url' => 'nullable|string|max:255',  // Changed from url to string
+        'linkedin_url' => 'nullable|string|max:155',  // Changed from url to string
+        'instagram_url' => 'nullable|string|max:155',  // Changed from url to string
         'overview' => 'nullable|string',
         'course' => 'nullable|array',  // Changed from sometimes to nullable
         'course.*' => 'nullable',  // Removed exists check
@@ -459,6 +460,8 @@ public function create()
         abort(403, 'You already have an advisor assigned to you.');
     }
 
+    Log::info('Create finder profile depois de validar');
+    
     return view('finder-profile', [
         'courses' => $courses,
         'educationData' => $educationData,
@@ -471,6 +474,8 @@ public function edit($id = null)
     $profile = null;
     $educationData = [];
     $interestAreas = [];
+    
+    Log::info('Edit metodo INICIO');
     
     if ($id) {
         $profile = Finder::find($id);

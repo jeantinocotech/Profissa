@@ -9,6 +9,7 @@ class ProfileEducation extends Model
     
     protected $fillable = [
         'id_profiles_advisor',
+        'id_profiles_finder',
         'Id_education',
         'id_courses',
         'institution_name',

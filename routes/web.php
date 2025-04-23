@@ -7,6 +7,12 @@ use App\Http\Controllers\FinderSearchController;
 use App\Http\Controllers\MeetingRequestController;
 use Illuminate\Support\Facades\Route;
 Use App\Http\Controllers\CourseSearchController;
+use App\Http\Controllers\AdvisorAvailabilityController;
+use App\Http\Controllers\MeetingProposalController;
+
+
+
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -82,7 +88,7 @@ Route::post('/requests/store', [MeetingRequestController::class, 'store'])->name
 Route::get('/requests', [MeetingRequestController::class, 'index'])->name('requests.index');
 
 Route::get('/meeting/respond/{meetingRequest}', [MeetingRequestController::class, 'responseForm'])
-    ->name('meeting.respond.form');
+    ->name('meeting.response.form');
 
 Route::post('/meeting/respond/{meetingRequest}', [MeetingRequestController::class, 'response'])->name('meeting.respond');
 
@@ -97,7 +103,42 @@ Route::post('/meeting-requests/{meetingRequest}/cancel-request', [MeetingRequest
 // Resposta do Advisor à solicitação de cancelamento
 Route::post('/meeting-requests/{meetingRequest}/approve-cancellation', [MeetingRequestController::class, 'approveCancellation'])
     ->name('meeting.cancel.approve');
+
 Route::post('/meeting-requests/{meetingRequest}/deny-cancellation', [MeetingRequestController::class, 'denyCancellation'])
     ->name('meeting.cancel.deny');
+
+Route::get('/advisor/availability', [AdvisorAvailabilityController::class, 'index'])->middleware('auth');
+Route::post('/advisor/availability', [AdvisorAvailabilityController::class, 'store'])->middleware('auth');
+
+
+// Mostrar formulário de proposta de reunião
+Route::get('/meeting-request/{id}/propose', [MeetingProposalController::class, 'create'])
+    ->middleware('auth')->name('meeting-proposal.create');
+
+// Enviar proposta de reunião
+Route::post('/meeting-request/{id}/propose', [MeetingProposalController::class, 'store'])
+    ->middleware('auth')->name('meeting-proposal.store');
+
+// Advisor responde a uma proposta
+Route::post('/meeting-proposal/{id}/respond', [MeetingProposalController::class, 'responseProposalForm'])
+    ->middleware('auth')->name('meeting-proposal.respondForm');
+
+Route::get('/meeting-proposal/{id}/respond', [MeetingProposalController::class, 'responseProposalForm'])
+    ->middleware('auth')
+    ->name('meeting-proposal.respondForm');
+
+// Confirmar reunião realizada (Finder ou Advisor)
+Route::post('/meeting-proposal/{id}/confirm', [MeetingProposalController::class, 'confirm'])
+    ->middleware('auth')->name('meeting-proposal.confirm');
+
+
+// Solicitação de cancelamento para reuniões aceitas
+Route::post('/meeting-proposal/{id}/cancel-request', [MeetingProposalController::class, 'requestCancellation'])
+    ->name('meeting-proposal.cancel.request');
+
+
+// Resposta do Advisor à solicitação de cancelamento
+Route::post('/meeting-proposal/{meetingRequest}/approve-cancellation', [MeetingProposalController::class, 'approveCancellation'])
+    ->name('meeting-proposal.cancel.approve');
 
 require __DIR__.'/auth.php';

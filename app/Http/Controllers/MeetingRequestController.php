@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\MeetingRequest;
+use App\Models\MeetingProposal;
 use App\Models\Advisor;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -26,7 +27,7 @@ class MeetingRequestController extends Controller
             }
     
             // Advisor vê reuniões recebidas
-            $meetingRequests = MeetingRequest::with(['finder.user'])
+            $meetingRequests = MeetingRequest::with(['finder.user', 'proposal'])
                 ->where('id_profiles_advisor', $advisor->id)
                 ->latest()
                 ->get();
@@ -39,7 +40,7 @@ class MeetingRequestController extends Controller
             }
     
             // Finder vê apenas as reuniões que ele solicitou
-            $meetingRequests = MeetingRequest::with(['advisor.user'])
+            $meetingRequests = MeetingRequest::with(['advisor.user', 'proposal'])
                 ->where('id_profiles_finder', $finder->id)
                 ->latest()
                 ->get();
@@ -144,10 +145,12 @@ class MeetingRequestController extends Controller
         return view('response-form', compact('request'));
     }
 
+   
+
     public function response(Request $request, MeetingRequest $meetingRequest)
     {
         
-        Log::info('response - Request: ' , [$request]); // Log the advisorID for debugging
+        Log::info('response - Request: ' , [$request->all()]); // Log the advisorID for debugging
         Log::info('response - MeetingRequest: ' , [$meetingRequest]); // Log the advisorID for debugging
         
         $request->validate([
@@ -155,7 +158,7 @@ class MeetingRequestController extends Controller
             'advisor_response' => 'required|string|max:500'
         ]);
 
-        Log::info('Resposta recebida:', [
+        Log::info('Response - Resposta recebida:', [
             'status' => $request->status,
             'advisor_response' => $request->advisor_response,
         ]);
@@ -183,6 +186,7 @@ class MeetingRequestController extends Controller
         if ($meetingRequest->status !== 'pending') {
             abort(400, 'Apenas solicitações pendentes podem ser canceladas diretamente.');
         }
+
         
         // Cancelar a reunião
         $meetingRequest->update([
@@ -230,6 +234,11 @@ class MeetingRequestController extends Controller
         $request->validate([
             'cancellation_reason' => 'required|string|max:500'
         ]);
+
+        Log::info('Cancellation request received - antes update:', [
+            'meeting details' => [$meetingRequest],
+            'request details' => [$request]
+        ]);
         
         // Atualizar o status da reunião para "cancellation_requested"
         $meetingRequest->update([
@@ -258,7 +267,7 @@ class MeetingRequestController extends Controller
         
         // Aprovar o cancelamento
         $meetingRequest->update([
-            'status' => 'canceled',
+            'status' => 'cancelled',
             'canceled_at' => now()
         ]);
         

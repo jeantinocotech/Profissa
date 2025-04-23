@@ -16,6 +16,7 @@ use App\Models\Education;
 use App\Models\ProfileEducation;
 use App\Models\Skills;
 use App\Models\AdvisorSkill;
+use Illuminate\Support\Arr;
 
 class AdvisorProfileController extends Controller
 {
@@ -99,14 +100,16 @@ class AdvisorProfileController extends Controller
     public function store(Request $request)
     {
         
-        Log::info('Storing advisor profile');    
         
+        Log::info('Storing advisor profile');    
+        Log::info('Advisor form data:', $request->all());
+
         // Validate incoming request data
         $data = $request->validate([
-            'full_name' => 'required|string|max:45',
+            'full_name' => 'required|string|max:155',
             'profile_picture' => 'nullable|image|max:5120', // Max 5MB
-            'linkedin_url' => 'nullable|url|max:45',
-            'instagram_url' => 'nullable|url|max:45',
+            'linkedin_url' => 'nullable|url|max:155',
+            'instagram_url' => 'nullable|url|max:155',
             'overview' => 'nullable|string',
             'course' => 'nullable|array|min:1',
             'course.*' => 'exists:courses,id',
@@ -123,7 +126,7 @@ class AdvisorProfileController extends Controller
         ]);
     
         // Add debugging here
-        Log::info('Storing advisor profile', [
+        Log::info('Antes - Storing advisor profile', [
             'user_id' => Auth::id(),
             'data' => $data
         ]);    
@@ -164,13 +167,13 @@ class AdvisorProfileController extends Controller
             ]);
 
             // More detailed logging
-            Log::info('Storing advisor profile', [
+            Log::info('Depois Foto - Storing advisor profile', [
                 'user_id' => Auth::id(),
                 'data' => $data
             ]);
             
              // Add more debugging
-            DB::enableQueryLog();
+            //DB::enableQueryLog();
 
             // More debugging
             //dd(DB::getQueryLog()); // Show executed query
@@ -192,26 +195,47 @@ class AdvisorProfileController extends Controller
                 'linkedin_url' => $data['linkedin_url'] ?? null,
                 'instagram_url' => $data['instagram_url'] ?? null,
                 'overview' => $data['overview'] ?? null,
-                'profile_completed' => 0,
                 'is_active' => $data['is_active'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
+            Log::info('Saved advisor profile data',  [$data]);
+
+            $courses = Arr::get($data, 'course', []);
+            $institutions = Arr::get($data, 'institution', []);
+            $certifications = Arr::get($data, 'certification', []);
+            $startDates = Arr::get($data, 'start_date', []);
+            $endDates = Arr::get($data, 'end_date', []);
+            $comments = Arr::get($data, 'comments', []);
+
             // Process education entries and insert into `profile_education`
-            foreach ($data['course'] as $index => $courseId) {
-    
-                // Insert profile education entry
+            foreach ($courses as $index => $courseId) {
                 DB::table('profile_education')->insert([
                     'id_profiles_advisor' => $advisorProfileId,
-                    'Institution_name' => $data['institution'][$index],
+                    'Institution_name' => $institutions[$index] ?? null,
                     'id_courses' => $courseId,
-                    'certification' => $data['certification'][$index] ?? null,
-                    'dt_start' => $data['start_date'][$index],
-                    'dt_end' => $data['end_date'][$index] ?? null,
-                    'comments' => $data['comments'][$index] ?? null,
+                    'certification' => $certifications[$index] ?? null,
+                    'dt_start' => $startDates[$index] ?? null,
+                    'dt_end' => $endDates[$index] ?? null,
+                    'comments' => $comments[$index] ?? null,
                 ]);
             }
+
+
+            //foreach ($data['course'] as $index => $courseId) {
+    
+                // Insert profile education entry
+            //    DB::table('profile_education')->insert([
+            //        'id_profiles_advisor' => $advisorProfileId,
+            //        'Institution_name' => $data['institution'][$index],
+            //        'id_courses' => $courseId,
+            //        'certification' => $data['certification'][$index] ?? null,
+            //        'dt_start' => $data['start_date'][$index],
+            //        'dt_end' => $data['end_date'][$index] ?? null,
+            //        'comments' => $data['comments'][$index] ?? null,
+            //    ]);
+            //}
 
             // Process skills
             //dd('Store - antes de processar Skikks', $advisorProfileId); // Check generated ID
@@ -357,16 +381,36 @@ public function update(Request $request, $id)
         $advisor->profileEducation()->delete();
         //dd('Reached show method 1', $data); // Immediate debugging
         // Add new education records
-        foreach ($data['course'] as $index => $courseId) {
+
+        $courses = Arr::get($data, 'course', []);
+        $institutions = Arr::get($data, 'institution', []);
+        $certifications = Arr::get($data, 'certification', []);
+        $startDates = Arr::get($data, 'start_date', []);
+        $endDates = Arr::get($data, 'end_date', []);
+        $comments = Arr::get($data, 'comments', []);
+
+        // Process education entries and insert into `profile_education`
+        foreach ($courses as $index => $courseId) {
             $advisor->profileEducation()->create([
-                'institution_name' => $data['institution'][$index],
+                'institution_name' => $institutions[$index] ?? null,
                 'id_courses' => $courseId,
-                'certification' => $data['certification'][$index] ?? null,
-                'dt_start' => $data['start_date'][$index],
-                'dt_end' => $data['end_date'][$index] ?? null,
-                'comments' => $data['comments'][$index] ?? null,
+                'certification' => $certifications[$index] ?? null,
+                'dt_start' => $startDates[$index] ?? null,
+                'dt_end' => $endDates[$index] ?? null,
+                'comments' => $comments[$index] ?? null,
             ]);
-    }
+        }
+
+        //foreach ($data['course'] as $index => $courseId) {
+        //    $advisor->profileEducation()->create([
+        //        'institution_name' => $data['institution'][$index],
+        //        'id_courses' => $courseId,
+        //        'certification' => $data['certification'][$index] ?? null,
+        //        'dt_start' => $data['start_date'][$index],
+        //        'dt_end' => $data['end_date'][$index] ?? null,
+        //        'comments' => $data['comments'][$index] ?? null,
+        //    ]);
+        //}
        
         Log::info('Delete Skills - Antes de deletar');
         //dd('antes do IF de skills', $id, $data);

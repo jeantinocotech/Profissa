@@ -36,6 +36,9 @@
                         <x-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
                             {{ __('Advisor') }}
                         </x-nav-link>
+                        <x-nav-link href="{{ url('/advisor/availability') }}" :active="request()->is('advisor/availability')">
+                              {{ __('My Availability') }}
+                        </x-nav-link>
                     @endif
 
                     @if ($hasFinder)

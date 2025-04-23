@@ -9,10 +9,11 @@ use App\Models\Finder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\MeetingRequest;
+use App\Models\MeetingProposal;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $completionPercentage = 0; // Default value
@@ -21,38 +22,95 @@ class DashboardController extends Controller
         $hasAdvisor = \App\Models\Advisor::where('user_id', $user->id)->exists();
         $hasFinder = \App\Models\Finder::where('user_id', $user->id)->exists();
         $meetingRequests = collect(); // inicia vazio
+        $meetingProposals = collect(); // inicia vazio
+        $meetings = [];
+        $advisorsReady = [];
      
 
         Log::info('Profile', [$user] );
+        Log::info( 'Dashcontroler request all:',$request->all() );
+
+        // Get the filter status from the request
+        $statusFilter = $request->query('status');
 
         // Determine if the user is an advisor or a finder
         if ($hasAdvisor) {
+
             $profile = Advisor::where('user_id', $user->id)->first();
+
             if ($profile) {
                 $completionPercentage = $this->calculateAdvisorProfileCompletion($profile, $missingItems);
                 $profileName = $profile->full_name;
-                $meetingRequests = MeetingRequest::with(['finder.user'])
-                ->where('id_profiles_advisor', $profile->id)
-                ->latest()
+
+                 // Apply status filter if provided
+                $query = MeetingRequest::where('id_profiles_advisor', $profile->id)
+                ->with(['finder.user', 'advisor','proposal'])
                 ->get();
+
+                Log::info( 'Dashcontroler Meeting Request advisor:', [$query] );
+
+                if ($statusFilter && in_array($statusFilter, ['pending', 'accepted', 'declined', 'cancellation_requested'])) {
+                    $query->where('proposal.status', $statusFilter);
+                }
+        
+                $meetingRequests = $query;
+
             }
+
         } elseif ($hasFinder) {
+
             $profile = Finder::where('user_id', $user->id)->first();
+           
+            // Apenas os com status "accepted"
+            $advisorsReady = MeetingRequest::where('id_profiles_finder', $profile->id)
+            ->where('status', 'accepted')
+            ->with(['finder','advisor', 'proposal']) // adicionamos o proposal
+            ->get();
+
+            Log::info( 'Dashcontroler advisorsReady:',$advisorsReady->all() );
+           
             if ($profile) {
                 $completionPercentage = $this->calculateFinderProfileCompletion($profile, $missingItems);
                 $profileName = $profile->full_name;
-                $meetingRequests = MeetingRequest::with(['advisor.user'])
-                ->where('id_profiles_finder', $profile->id)
-                ->latest()
+                
+                // Apply status filter if provided
+                $query = MeetingRequest::where('id_profiles_finder', $profile->id)
+                ->with(['advisor.user', 'finder','proposal'])
                 ->get();
+
+                Log::info( 'Dashcontroler Meeting Request finder:', [$query] );
+            
+                if ($statusFilter && in_array($statusFilter, ['pending', 'accepted', 'declined', 'canceled'])) {
+                    $query->where('proposal.status', $statusFilter);
+                }
+        
+                $meetingRequests = $query;
             }
         }
 
-        $statusCounts = [
-            'pending' => $meetingRequests->where('status', 'pending')->count(),
-            'accepted' => $meetingRequests->where('status', 'accepted')->count(),
-            'declined' => $meetingRequests->where('status', 'declined')->count(),
-        ];
+        if (!isset($query->id)) {
+      
+            $meetingProposals = MeetingProposal::whereIn('id_meeting_request', $query->pluck('id'))
+            ->with('meetingRequest.advisor','meetingRequest.finder')
+            ->get();
+        
+            Log::info( 'Dashcontroler Meeting Proposals:', [$meetingProposals->all()] );
+       
+
+             $proposalCounts = [
+                'all' => $meetingProposals->count(),
+                'pending' => $meetingProposals->where('status', 'pending')->count(),
+                'accepted' => $meetingProposals->where('status', 'accepted')->count(),
+                'declined' => $meetingProposals->where('status', 'declined')->count(),
+            ];
+                if ($hasAdvisor) {
+                    $proposalCounts['cancellation_requested' ] = $meetingProposals->where('status', 'cancellation_requested')->count();
+                } else {
+                    $proposalCounts['canceled'] = $meetingProposals->where('status', 'canceled')->count();
+                }
+       
+            Log::info( 'Dashcontroler proposal counts:',[$proposalCounts] );
+        }
 
         $calendarEvents = $meetingRequests
         ->where('status', 'accepted')
@@ -65,7 +123,17 @@ class DashboardController extends Controller
             ];
         })->values();
 
-        return view('dashboard', compact('completionPercentage', 'missingItems', 'profileName','meetingRequests', 'hasAdvisor', 'hasFinder', 'statusCounts', 'calendarEvents'));
+        return view('dashboard', 
+                compact('completionPercentage', 
+                'missingItems', 
+                'profileName',
+                'meetingRequests',
+                'hasAdvisor', 
+                'hasFinder', 
+                'calendarEvents',
+                'meetingProposals',
+                'advisorsReady',
+                'proposalCounts'));
     }
 
     private function calculateAdvisorProfileCompletion($profile,  &$missing = [])
