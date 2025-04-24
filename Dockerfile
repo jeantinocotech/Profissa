@@ -1,4 +1,4 @@
-# Etapa 1: build do frontend com Vite
+# Etapa 1: construir frontend com Vite
 FROM node:18-alpine as frontend
 
 WORKDIR /app
@@ -7,14 +7,19 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Etapa 2: build da aplicação Laravel com PHP
+# Etapa 2: preparar PHP + Apache com Laravel
 FROM webdevops/php-apache:8.2-alpine
 
 WORKDIR /app
 
-# Instalar dependências do Laravel
+# Copia os arquivos da build do frontend e Laravel
 COPY --from=frontend /app /app
-RUN composer install --no-dev --optimize-autoloader
 
-# Expor a porta correta
+# Instala dependências PHP
+RUN composer install --no-dev --optimize-autoloader \
+    && chown -R application:application /app \
+    && chmod -R 755 /app/storage /app/bootstrap/cache
+
+# Porta padrão
 EXPOSE 80
+
