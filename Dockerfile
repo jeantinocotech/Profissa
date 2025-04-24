@@ -12,7 +12,7 @@ FROM webdevops/php-apache:8.2-alpine
 
 WORKDIR /app
 
-ENV APACHE_DOCUMENT_ROOT /app/public
+ENV WEB_DOCUMENT_ROOT /app/public
 
 RUN sed -ri -e 's!/app!/app/public!g' /etc/apache2/sites-available/000-default.conf
 
@@ -28,7 +28,6 @@ RUN composer install --no-dev --optimize-autoloader \
 RUN chown -R application:application /app \
     && chmod -R 755 /app/storage /app/bootstrap/cache
 
-# Porta padrão
 EXPOSE 80
 
 CMD ["supervisord", "-n"]
