@@ -14,8 +14,6 @@ WORKDIR /app
 
 ENV WEB_DOCUMENT_ROOT /app/public
 
-RUN sed -ri -e 's!/app!/app/public!g' /etc/apache2/sites-available/000-default.conf
-
 # Copia os arquivos da build do frontend e Laravel
 COPY --from=frontend /app /app
 
