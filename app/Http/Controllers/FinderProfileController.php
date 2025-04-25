@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use App\Models\finder;
+use App\Models\Finder;
 use App\Models\Course;
 use App\Models\Education;
 use App\Models\ProfileEducation;

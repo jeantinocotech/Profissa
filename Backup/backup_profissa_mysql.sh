@@ -4,7 +4,7 @@
 DB_NAME="my_herd_app"
 DB_USER="root"
 DB_PASS="" # ⚠️ Você pode remover essa linha e digitar a senha ao executar
-BACKUP_DIR="$HOME/Herd/Profissa/Backup/"
+BACKUP_DIR="/User/jeansoares/Herd/Profissa/Backup/"
 DATE=$(date +"%Y-%m-%d_%H-%M")
 FILE_NAME="${DB_NAME}_backup_${DATE}.sql"
 
