@@ -343,6 +343,12 @@ public function update(Request $request, $id)
             'stored_path' => $profilePicturePath,
             'full_path' => Storage::disk('public')->path($profilePicturePath)
         ]);
+        
+        Log::info('UPLOAD DE IMAGEM', [
+            'stored_path' => $profilePicturePath,
+            'full_path' => Storage::disk('public')->path($profilePicturePath),
+            'is_writable' => is_writable(Storage::disk('public')->path('profiles'))
+        ]);
     
         $finder->profile_picture = $profilePicturePath;
         
