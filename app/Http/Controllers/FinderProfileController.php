@@ -164,7 +164,7 @@ class FinderProfileController extends Controller
                 session()->flash('temp_profile_picture', $profilePicturePath);
 
                 // Log the file storage information
-                Log::info('Profile picture stored', [
+                Log::info('FINDER PROFILE PATH STORED', [
                     'original_name' => $request->file('profile_picture')->getClientOriginalName(),
                     'stored_path' => $profilePicturePath,
                     'full_path' => Storage::disk('public')->path($profilePicturePath)
@@ -337,6 +337,12 @@ public function update(Request $request, $id)
         $file = $request->file('profile_picture');
         $filename = time() . '_' . $file->getClientOriginalName();
         $profilePicturePath = $file->storeAs('profiles', $filename, 'public');
+
+        Log::info('FINDER PROFILE PATH UPDATED', [
+            'original_name' => $request->file('profile_picture')->getClientOriginalName(),
+            'stored_path' => $profilePicturePath,
+            'full_path' => Storage::disk('public')->path($profilePicturePath)
+        ]);
     
         $finder->profile_picture = $profilePicturePath;
         
