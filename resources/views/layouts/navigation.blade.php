@@ -105,13 +105,35 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
-                {{ __('Advisor Profile') }}
-            </x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
-                {{ __('Finder Profile') }}
-            </x-responsive-nav-link>
+            @if (!$hasAdvisor && !$hasFinder)
+                        {{-- Pode escolher entre ser Advisor ou Finder --}}
+                        <x-responsive-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
+                        {{ __('Advisor') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
+                            {{ __('Finder') }}
+                        </x-responsive-nav-link>
+            @endif
+
+            @if ($hasAdvisor)
+                <x-responsive-nav-link :href="route('advisor-profile.show')" :active="request()->routeIs('advisor-profile')">
+                    {{ __('Advisor Profile') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="url('/advisor/availability')" :active="request()->is('advisor/availability')">
+                {{ __('Advisor Profile') }}
+                </x-responsive-nav-link>          
+            @endif
+           
+            @if ($hasFinder)
+                <x-responsive-nav-link :href="route('finder-profile.show')" :active="request()->routeIs('finder-profile')">
+                    {{ __('Finder Profile') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('advisor.search')" :active="request()->routeIs('advisor.search')">
+                    {{ __('Find an Advisor') }}
+                </x-responsive-nav-link>
+            @endif
 
         </div>
 
