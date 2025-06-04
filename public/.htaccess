@@ -1,3 +1,19 @@
+# Force correct MIME types for assets
+AddType text/css .css
+AddType application/javascript .js
+AddType application/json .json
+
+# Specific rules for build assets
+<LocationMatch "^/build/.*\.css$">
+    ForceType text/css
+</LocationMatch>
+
+<LocationMatch "^/build/.*\.js$">
+    ForceType application/javascript
+</LocationMatch>
+
+
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
@@ -23,3 +39,14 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Cache control for assets
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    <IfModule mod_expires.c>
+        ExpiresActive On
+        ExpiresDefault "access plus 1 month"
+    </IfModule>
+    <IfModule mod_headers.c>
+        Header append Cache-Control "public"
+    </IfModule>
+</FilesMatch>
